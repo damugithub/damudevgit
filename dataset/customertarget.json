@@ -1,0 +1,85 @@
+{
+	"name": "customertarget",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureDataLakeStorage1",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"folderPath": "sample",
+				"fileSystem": "storagetargetpoc"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"firstRowAsHeader": false,
+			"quoteChar": "\""
+		},
+		"schema": [
+			{
+				"name": "INVENTORYITEMBASEPEOITEMCATALOGGROUPID",
+				"type": "String"
+			},
+			{
+				"name": "INVENTORYITEMBASEPEOITEMNUMBER",
+				"type": "String"
+			},
+			{
+				"name": "INVENTORYITEMBASEPEOITEMTYPE",
+				"type": "String"
+			},
+			{
+				"name": "INVENTORYITEMBASEPEOPRIMARYUOMCODE",
+				"type": "String"
+			},
+			{
+				"name": "INVENTORYITEMBASEPEOUNITHEIGHT",
+				"type": "String"
+			},
+			{
+				"name": "INVENTORYITEMBASEPEOUNITLENGTH",
+				"type": "String"
+			},
+			{
+				"name": "INVENTORYITEMBASEPEOUNITWIDTH",
+				"type": "String"
+			},
+			{
+				"name": "INVENTORYITEMID",
+				"type": "String"
+			},
+			{
+				"name": "INVENTORYITEMTRANSLATIONPEODESCRIPTION",
+				"type": "String"
+			},
+			{
+				"name": "ITEMCLASSBASEPEOITEMCLASSCODE",
+				"type": "String"
+			},
+			{
+				"name": "ITEMCLASSBASEPEOITEMCLASSID",
+				"type": "String"
+			},
+			{
+				"name": "ITEMCLASSTRANPEOITEMCLASSID",
+				"type": "String"
+			},
+			{
+				"name": "ITEMCLASSTRANPEOITEMCLASSNAME",
+				"type": "String"
+			},
+			{
+				"name": "ITEMORGANIZATIONPARAMETERPEOORGANIZATIONCODE",
+				"type": "String"
+			},
+			{
+				"name": "ORGANIZATIONID",
+				"type": "String"
+			}
+		]
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

@@ -1,0 +1,80 @@
+{
+	"name": "PL_Gold_Dev",
+	"properties": {
+		"activities": [
+			{
+				"name": "Get Set Numbers From Control Table",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderQuery": "select distinct Set_Number from [Fusion_ERP].[CT_ETL_TASK_CONTROL_G_Archrock_Views]\nwhere 1=1 and is_runnable = 'Y'\norder by Set_Number",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "DS_FUSION_ERP_CT_ETL_TASK_CONTROL_G",
+						"type": "DatasetReference"
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "ForEach Set of Targets",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Get Set Numbers From Control Table",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Get Set Numbers From Control Table').output.value",
+						"type": "Expression"
+					},
+					"isSequential": true,
+					"activities": [
+						{
+							"name": "PL_Gold_Inner_Dev",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "PL_Gold_Inner_Dev",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"set_number": {
+										"value": "@item().set_number",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			}
+		],
+		"folder": {
+			"name": "Archrock - Dev"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-07-24T07:19:24Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

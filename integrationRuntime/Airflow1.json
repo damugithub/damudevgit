@@ -1,0 +1,23 @@
+{
+	"name": "Airflow1",
+	"properties": {
+		"type": "Airflow",
+		"typeProperties": {
+			"computeProperties": {
+				"location": "East US",
+				"computeSize": "Large",
+				"extraNodes": 0,
+				"enableAutoscale": false
+			},
+			"airflowProperties": {
+				"airflowVersion": "2.4.3",
+				"airflowWebUrl": "https://13611984781690.eastus.airflow.svc.datafactory.azure.com/login/",
+				"airflowRequirements": [],
+				"enableAADIntegration": true,
+				"airflowEntityReferences": [],
+				"encryptedSecrets": [],
+				"secrets": []
+			}
+		}
+	}
+}

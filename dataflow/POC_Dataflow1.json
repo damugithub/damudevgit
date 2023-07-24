@@ -1,0 +1,90 @@
+{
+	"name": "POC_Dataflow1",
+	"properties": {
+		"folder": {
+			"name": "MB folder/oldfiles/DataLake POC"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "customers",
+						"type": "DatasetReference"
+					},
+					"name": "customerinput"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "customertarget",
+						"type": "DatasetReference"
+					},
+					"name": "customertarget"
+				}
+			],
+			"transformations": [
+				{
+					"name": "filter1"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          CUST_ID as string,",
+				"          CUST_FIRST_NAME as string,",
+				"          CUST_LAST_NAME as string,",
+				"          CUST_GENDER as string,",
+				"          CUST_YEAR_OF_BIRTH as string,",
+				"          CUST_MARITAL_STATUS as string,",
+				"          CUST_STREET_ADDRESS as string,",
+				"          CUST_POSTAL_CODE as string,",
+				"          CUST_CITY as string,",
+				"          CUST_CITY_ID as string,",
+				"          CUST_STATE_PROVINCE as string,",
+				"          CUST_STATE_PROVINCE_ID as string,",
+				"          COUNTRY_ID as string,",
+				"          CUST_MAIN_PHONE_NUMBER as string,",
+				"          CUST_INCOME_LEVEL as string,",
+				"          CUST_CREDIT_LIMIT as string,",
+				"          CUST_EMAIL as string,",
+				"          CUST_TOTAL as string,",
+				"          CUST_TOTAL_ID as string,",
+				"          CUST_SRC_ID as string,",
+				"          CUST_EFF_FROM as string,",
+				"          CUST_EFF_TO as string,",
+				"          CUST_VALID as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     partitionBy('hash', 1)) ~> customerinput",
+				"customerinput filter(CUST_LAST_NAME=='Abrams') ~> filter1",
+				"filter1 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          INVENTORYITEMBASEPEOITEMCATALOGGROUPID as string,",
+				"          INVENTORYITEMBASEPEOITEMNUMBER as string,",
+				"          INVENTORYITEMBASEPEOITEMTYPE as string,",
+				"          INVENTORYITEMBASEPEOPRIMARYUOMCODE as string,",
+				"          INVENTORYITEMBASEPEOUNITHEIGHT as string,",
+				"          INVENTORYITEMBASEPEOUNITLENGTH as string,",
+				"          INVENTORYITEMBASEPEOUNITWIDTH as string,",
+				"          INVENTORYITEMID as string,",
+				"          INVENTORYITEMTRANSLATIONPEODESCRIPTION as string,",
+				"          ITEMCLASSBASEPEOITEMCLASSCODE as string,",
+				"          ITEMCLASSBASEPEOITEMCLASSID as string,",
+				"          ITEMCLASSTRANPEOITEMCLASSID as string,",
+				"          ITEMCLASSTRANPEOITEMCLASSNAME as string,",
+				"          ITEMORGANIZATIONPARAMETERPEOORGANIZATIONCODE as string,",
+				"          ORGANIZATIONID as string",
+				"     ),",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> customertarget"
+			]
+		}
+	}
+}

@@ -1,0 +1,118 @@
+{
+	"name": "SqlServercustomertabletarget",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "SqlServer1",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "SqlServerTable",
+		"schema": [
+			{
+				"name": "CUST_ID",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "CUST_FIRST_NAME",
+				"type": "varchar"
+			},
+			{
+				"name": "CUST_LAST_NAME",
+				"type": "varchar"
+			},
+			{
+				"name": "CUST_GENDER",
+				"type": "char"
+			},
+			{
+				"name": "CUST_YEAR_OF_BIRTH",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "CUST_MARITAL_STATUS",
+				"type": "varchar"
+			},
+			{
+				"name": "CUST_STREET_ADDRESS",
+				"type": "varchar"
+			},
+			{
+				"name": "CUST_POSTAL_CODE",
+				"type": "varchar"
+			},
+			{
+				"name": "CUST_CITY",
+				"type": "varchar"
+			},
+			{
+				"name": "CUST_CITY_ID",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "CUST_STATE_PROVINCE",
+				"type": "varchar"
+			},
+			{
+				"name": "CUST_STATE_PROVINCE_ID",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "COUNTRY_ID",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "CUST_MAIN_PHONE_INT",
+				"type": "varchar"
+			},
+			{
+				"name": "CUST_INCOME_LEVEL",
+				"type": "varchar"
+			},
+			{
+				"name": "CUST_CREDIT_LIMIT",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "CUST_EMAIL",
+				"type": "varchar"
+			},
+			{
+				"name": "CUST_TOTAL",
+				"type": "varchar"
+			},
+			{
+				"name": "CUST_TOTAL_ID",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "CUST_SRC_ID",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "CUST_EFF_FROM",
+				"type": "date"
+			},
+			{
+				"name": "CUST_EFF_TO",
+				"type": "date"
+			},
+			{
+				"name": "CUST_VALID",
+				"type": "varchar"
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "CUSTOMERS_TARGET"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

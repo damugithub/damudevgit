@@ -1,0 +1,79 @@
+{
+	"name": "DS_FUSION_ERP_CT_ETL_TASK_CONTROL_G",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureSqlDatabase1",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "Task_Key",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "Task_Name",
+				"type": "varchar"
+			},
+			{
+				"name": "Task_Phase",
+				"type": "varchar"
+			},
+			{
+				"name": "Module_Name",
+				"type": "varchar"
+			},
+			{
+				"name": "Source",
+				"type": "varchar"
+			},
+			{
+				"name": "Target",
+				"type": "varchar"
+			},
+			{
+				"name": "Last_Successful_Start_Timestamp",
+				"type": "datetime",
+				"precision": 23,
+				"scale": 3
+			},
+			{
+				"name": "Bicc_Job_Id",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "SQL_Text",
+				"type": "nvarchar"
+			},
+			{
+				"name": "Procedure_Name",
+				"type": "varchar"
+			},
+			{
+				"name": "IsRunnable",
+				"type": "tinyint",
+				"precision": 3
+			},
+			{
+				"name": "IsPreExtractDependency",
+				"type": "bit"
+			},
+			{
+				"name": "Parquet_file_path",
+				"type": "varchar"
+			},
+			{
+				"name": "Delta_file_path",
+				"type": "varchar"
+			}
+		],
+		"typeProperties": {
+			"schema": "Fusion_ERP",
+			"table": "CT_ETL_task_control_G"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}
