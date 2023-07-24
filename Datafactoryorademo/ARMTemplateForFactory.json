@@ -1,0 +1,2019 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "Datafactoryorademo"
+		},
+		"AzureDataLakeStorage1_accountKey": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accountKey' of 'AzureDataLakeStorage1'"
+		},
+		"AzureSqlDatabase1_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'AzureSqlDatabase1'"
+		},
+		"SqlServer1_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'SqlServer1'"
+		},
+		"AzureDataLakeStorage1_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://adlsstoragedamu.dfs.core.windows.net/"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/PL_Gold_Dev')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Get Set Numbers From Control Table",
+						"type": "Lookup",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureSqlSource",
+								"sqlReaderQuery": "select distinct Set_Number from [Fusion_ERP].[CT_ETL_TASK_CONTROL_G_Archrock_Views]\nwhere 1=1 and is_runnable = 'Y'\norder by Set_Number",
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"dataset": {
+								"referenceName": "DS_FUSION_ERP_CT_ETL_TASK_CONTROL_G",
+								"type": "DatasetReference",
+								"parameters": {}
+							},
+							"firstRowOnly": false
+						}
+					},
+					{
+						"name": "ForEach Set of Targets",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "Get Set Numbers From Control Table",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('Get Set Numbers From Control Table').output.value",
+								"type": "Expression"
+							},
+							"isSequential": true,
+							"activities": [
+								{
+									"name": "PL_Gold_Inner_Dev",
+									"type": "ExecutePipeline",
+									"dependsOn": [],
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "PL_Gold_Inner_Dev",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": true,
+										"parameters": {
+											"set_number": {
+												"value": "@item().set_number",
+												"type": "Expression"
+											}
+										}
+									}
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"folder": {
+					"name": "Archrock - Dev"
+				},
+				"annotations": [],
+				"lastPublishTime": "2023-07-24T07:19:24Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/DS_FUSION_ERP_CT_ETL_TASK_CONTROL_G')]",
+				"[concat(variables('factoryId'), '/pipelines/PL_Gold_Inner_Dev')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/PL_Gold_Inner_Dev')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Get Records Based on Set Number",
+						"type": "Lookup",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureSqlSource",
+								"sqlReaderQuery": {
+									"value": "select\n\ttarget, create_view_flag,\n\t''''+replace(target_query,'''', '\\''')+'''' as target_query,\n\t'XX_GL_OPS_V/'+target as target_folder_name\nfrom\n[Fusion_ERP].[CT_ETL_TASK_CONTROL_G_Archrock_Views]\nwhere 1=1 and is_runnable = 'y'\nand set_number = @{pipeline().parameters.set_number}",
+									"type": "Expression"
+								},
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"dataset": {
+								"referenceName": "DS_FUSION_ERP_CT_ETL_TASK_CONTROL_G",
+								"type": "DatasetReference",
+								"parameters": {}
+							},
+							"firstRowOnly": false
+						}
+					},
+					{
+						"name": "ForEach Target record",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "Get Records Based on Set Number",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('Get Records Based on Set Number').output.value",
+								"type": "Expression"
+							},
+							"batchCount": 2,
+							"activities": [
+								{
+									"name": "DF_GOLD_LAYER",
+									"type": "ExecuteDataFlow",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"dataflow": {
+											"referenceName": "DF_GOLD_LAYER",
+											"type": "DataFlowReference",
+											"parameters": {
+												"sql_query": {
+													"value": "@item().target_query",
+													"type": "Expression"
+												},
+												"target_folder_name": {
+													"value": "'@{item().target_folder_name}'",
+													"type": "Expression"
+												},
+												"target_conatiner_name": "'gold-dimensional-model'"
+											},
+											"datasetParameters": {
+												"sourceview": {},
+												"deltatarget": {}
+											}
+										},
+										"staging": {},
+										"compute": {
+											"coreCount": 8,
+											"computeType": "General"
+										},
+										"traceLevel": "Fine"
+									}
+								},
+								{
+									"name": "Create View IF",
+									"description": "If create_view_flag = 'Y'\nthen create a view object",
+									"type": "IfCondition",
+									"dependsOn": [
+										{
+											"activity": "DF_GOLD_LAYER",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"userProperties": [],
+									"typeProperties": {
+										"expression": {
+											"value": "@equals(toUpper(item().create_view_flag), 'Y')",
+											"type": "Expression"
+										},
+										"ifFalseActivities": [
+											{
+												"name": "Dummy Variable",
+												"type": "SetVariable",
+												"dependsOn": [],
+												"policy": {
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"variableName": "dummy",
+													"value": "'dummy'"
+												}
+											}
+										],
+										"ifTrueActivities": [
+											{
+												"name": "Create View Script",
+												"description": "Create view object in ArchrockDemo database.",
+												"type": "Script",
+												"dependsOn": [],
+												"policy": {
+													"timeout": "0.12:00:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"linkedServiceName": {
+													"referenceName": "AzureSqlDatabase1",
+													"type": "LinkedServiceReference"
+												},
+												"typeProperties": {
+													"scripts": [
+														{
+															"type": "Query",
+															"text": {
+																"value": "@concat(\n'CREATE OR ALTER VIEW DBO.', item().target, ' AS\nSELECT * FROM\nOPENROWSET(\n    BULK ''https://archrockdemostorage.dfs.core.windows.net/gold-dimensional-model/XX_GL_OPS_V/', item().target, '/'',\n    FORMAT = ''DELTA''\n) AS abc;'\n)",
+																"type": "Expression"
+															}
+														}
+													],
+													"scriptBlockExecutionTimeout": "02:00:00"
+												}
+											}
+										]
+									}
+								},
+								{
+									"name": "Update last_successful_runtime",
+									"description": "Update last_successful_runtime column in control table.",
+									"type": "Script",
+									"dependsOn": [
+										{
+											"activity": "DF_GOLD_LAYER",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"linkedServiceName": {
+										"referenceName": "AzureSqlDatabase1",
+										"type": "LinkedServiceReference"
+									},
+									"typeProperties": {
+										"scripts": [
+											{
+												"type": "Query",
+												"text": {
+													"value": "update Fusion_ERP.[CT_ETL_TASK_CONTROL_G_Archrock_Views\nset last_successful_runtime = getdate()\nwhere 1=1\nand target = '@{item().target}'",
+													"type": "Expression"
+												}
+											}
+										],
+										"scriptBlockExecutionTimeout": "02:00:00"
+									}
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"parameters": {
+					"set_number": {
+						"type": "int",
+						"defaultValue": 0
+					}
+				},
+				"variables": {
+					"dummy": {
+						"type": "String"
+					}
+				},
+				"folder": {
+					"name": "Archrock - Dev"
+				},
+				"annotations": [],
+				"lastPublishTime": "2023-07-24T07:19:24Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/DS_FUSION_ERP_CT_ETL_TASK_CONTROL_G')]",
+				"[concat(variables('factoryId'), '/dataflows/DF_GOLD_LAYER')]",
+				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Pipelinetesting_twoflows')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "POC_Dataflow2_two_flows",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "1.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "POC_Dataflow2_two_flows",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"Sourcecustomers": {},
+									"source1": {},
+									"sink1": {},
+									"sink2": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"folder": {
+					"name": "Damu"
+				},
+				"annotations": [],
+				"lastPublishTime": "2023-07-24T11:35:49Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/POC_Dataflow2_two_flows')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Sample_POC_Pipeline')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "POC_Dataflow1",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "1.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "POC_Dataflow1",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"customerinput": {},
+									"customertarget": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine",
+							"runConcurrently": true
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"folder": {
+					"name": "Damu"
+				},
+				"annotations": [],
+				"lastPublishTime": "2023-07-24T11:35:49Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/POC_Dataflow1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pipeline1')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Copy data1",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DelimitedTextSource",
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "DelimitedTextReadSettings"
+								}
+							},
+							"sink": {
+								"type": "DelimitedTextSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings"
+								},
+								"formatSettings": {
+									"type": "DelimitedTextWriteSettings",
+									"quoteAllText": true,
+									"fileExtension": ".txt"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "samplefile",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "suppliertarget",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"annotations": [],
+				"lastPublishTime": "2023-07-22T16:57:07Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/samplefile')]",
+				"[concat(variables('factoryId'), '/datasets/suppliertarget')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pipeline2')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Wait1",
+						"type": "Wait",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"waitTimeInSeconds": 1
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureSqlTable1')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase1",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Database"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "dept_id",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "dept_name",
+						"type": "nvarchar"
+					},
+					{
+						"name": "loc_id",
+						"type": "nvarchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "department"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_ADLS_Archrock')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase1",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [],
+				"typeProperties": {}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_FUSION_ERP_CT_ETL_TASK_CONTROL_G')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase1",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "Task_Key",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "Task_Name",
+						"type": "varchar"
+					},
+					{
+						"name": "Task_Phase",
+						"type": "varchar"
+					},
+					{
+						"name": "Module_Name",
+						"type": "varchar"
+					},
+					{
+						"name": "Source",
+						"type": "varchar"
+					},
+					{
+						"name": "Target",
+						"type": "varchar"
+					},
+					{
+						"name": "Last_Successful_Start_Timestamp",
+						"type": "datetime",
+						"precision": 23,
+						"scale": 3
+					},
+					{
+						"name": "Bicc_Job_Id",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "SQL_Text",
+						"type": "nvarchar"
+					},
+					{
+						"name": "Procedure_Name",
+						"type": "varchar"
+					},
+					{
+						"name": "IsRunnable",
+						"type": "tinyint",
+						"precision": 3
+					},
+					{
+						"name": "IsPreExtractDependency",
+						"type": "bit"
+					},
+					{
+						"name": "Parquet_file_path",
+						"type": "varchar"
+					},
+					{
+						"name": "Delta_file_path",
+						"type": "varchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "Fusion_ERP",
+					"table": "CT_ETL_task_control_G"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/SqlServercustomertabletarget')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "SqlServer1",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "SqlServerTable",
+				"schema": [
+					{
+						"name": "CUST_ID",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "CUST_FIRST_NAME",
+						"type": "varchar"
+					},
+					{
+						"name": "CUST_LAST_NAME",
+						"type": "varchar"
+					},
+					{
+						"name": "CUST_GENDER",
+						"type": "char"
+					},
+					{
+						"name": "CUST_YEAR_OF_BIRTH",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "CUST_MARITAL_STATUS",
+						"type": "varchar"
+					},
+					{
+						"name": "CUST_STREET_ADDRESS",
+						"type": "varchar"
+					},
+					{
+						"name": "CUST_POSTAL_CODE",
+						"type": "varchar"
+					},
+					{
+						"name": "CUST_CITY",
+						"type": "varchar"
+					},
+					{
+						"name": "CUST_CITY_ID",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "CUST_STATE_PROVINCE",
+						"type": "varchar"
+					},
+					{
+						"name": "CUST_STATE_PROVINCE_ID",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "COUNTRY_ID",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "CUST_MAIN_PHONE_INT",
+						"type": "varchar"
+					},
+					{
+						"name": "CUST_INCOME_LEVEL",
+						"type": "varchar"
+					},
+					{
+						"name": "CUST_CREDIT_LIMIT",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "CUST_EMAIL",
+						"type": "varchar"
+					},
+					{
+						"name": "CUST_TOTAL",
+						"type": "varchar"
+					},
+					{
+						"name": "CUST_TOTAL_ID",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "CUST_SRC_ID",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "CUST_EFF_FROM",
+						"type": "date"
+					},
+					{
+						"name": "CUST_EFF_TO",
+						"type": "date"
+					},
+					{
+						"name": "CUST_VALID",
+						"type": "varchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "CUSTOMERS_TARGET"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/SqlServer1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/customers')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureDataLakeStorage1",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "customers.csv",
+						"fileSystem": "storageappspoc"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "CUST_ID",
+						"type": "String"
+					},
+					{
+						"name": "CUST_FIRST_NAME",
+						"type": "String"
+					},
+					{
+						"name": "CUST_LAST_NAME",
+						"type": "String"
+					},
+					{
+						"name": "CUST_GENDER",
+						"type": "String"
+					},
+					{
+						"name": "CUST_YEAR_OF_BIRTH",
+						"type": "String"
+					},
+					{
+						"name": "CUST_MARITAL_STATUS",
+						"type": "String"
+					},
+					{
+						"name": "CUST_STREET_ADDRESS",
+						"type": "String"
+					},
+					{
+						"name": "CUST_POSTAL_CODE",
+						"type": "String"
+					},
+					{
+						"name": "CUST_CITY",
+						"type": "String"
+					},
+					{
+						"name": "CUST_CITY_ID",
+						"type": "String"
+					},
+					{
+						"name": "CUST_STATE_PROVINCE",
+						"type": "String"
+					},
+					{
+						"name": "CUST_STATE_PROVINCE_ID",
+						"type": "String"
+					},
+					{
+						"name": "COUNTRY_ID",
+						"type": "String"
+					},
+					{
+						"name": "CUST_MAIN_PHONE_NUMBER",
+						"type": "String"
+					},
+					{
+						"name": "CUST_INCOME_LEVEL",
+						"type": "String"
+					},
+					{
+						"name": "CUST_CREDIT_LIMIT",
+						"type": "String"
+					},
+					{
+						"name": "CUST_EMAIL",
+						"type": "String"
+					},
+					{
+						"name": "CUST_TOTAL",
+						"type": "String"
+					},
+					{
+						"name": "CUST_TOTAL_ID",
+						"type": "String"
+					},
+					{
+						"name": "CUST_SRC_ID",
+						"type": "String"
+					},
+					{
+						"name": "CUST_EFF_FROM",
+						"type": "String"
+					},
+					{
+						"name": "CUST_EFF_TO",
+						"type": "String"
+					},
+					{
+						"name": "CUST_VALID",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureDataLakeStorage1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/customers1')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureDataLakeStorage1",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "customers.csv",
+						"fileSystem": "storageappspoc"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "CUST_ID",
+						"type": "String"
+					},
+					{
+						"name": "CUST_FIRST_NAME",
+						"type": "String"
+					},
+					{
+						"name": "CUST_LAST_NAME",
+						"type": "String"
+					},
+					{
+						"name": "CUST_GENDER",
+						"type": "String"
+					},
+					{
+						"name": "CUST_YEAR_OF_BIRTH",
+						"type": "String"
+					},
+					{
+						"name": "CUST_MARITAL_STATUS",
+						"type": "String"
+					},
+					{
+						"name": "CUST_STREET_ADDRESS",
+						"type": "String"
+					},
+					{
+						"name": "CUST_POSTAL_CODE",
+						"type": "String"
+					},
+					{
+						"name": "CUST_CITY",
+						"type": "String"
+					},
+					{
+						"name": "CUST_CITY_ID",
+						"type": "String"
+					},
+					{
+						"name": "CUST_STATE_PROVINCE",
+						"type": "String"
+					},
+					{
+						"name": "CUST_STATE_PROVINCE_ID",
+						"type": "String"
+					},
+					{
+						"name": "COUNTRY_ID",
+						"type": "String"
+					},
+					{
+						"name": "CUST_MAIN_PHONE_NUMBER",
+						"type": "String"
+					},
+					{
+						"name": "CUST_INCOME_LEVEL",
+						"type": "String"
+					},
+					{
+						"name": "CUST_CREDIT_LIMIT",
+						"type": "String"
+					},
+					{
+						"name": "CUST_EMAIL",
+						"type": "String"
+					},
+					{
+						"name": "CUST_TOTAL",
+						"type": "String"
+					},
+					{
+						"name": "CUST_TOTAL_ID",
+						"type": "String"
+					},
+					{
+						"name": "CUST_SRC_ID",
+						"type": "String"
+					},
+					{
+						"name": "CUST_EFF_FROM",
+						"type": "String"
+					},
+					{
+						"name": "CUST_EFF_TO",
+						"type": "String"
+					},
+					{
+						"name": "CUST_VALID",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureDataLakeStorage1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/customertarget')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureDataLakeStorage1",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"folderPath": "sample",
+						"fileSystem": "storagetargetpoc"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": false,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "INVENTORYITEMBASEPEOITEMCATALOGGROUPID",
+						"type": "String"
+					},
+					{
+						"name": "INVENTORYITEMBASEPEOITEMNUMBER",
+						"type": "String"
+					},
+					{
+						"name": "INVENTORYITEMBASEPEOITEMTYPE",
+						"type": "String"
+					},
+					{
+						"name": "INVENTORYITEMBASEPEOPRIMARYUOMCODE",
+						"type": "String"
+					},
+					{
+						"name": "INVENTORYITEMBASEPEOUNITHEIGHT",
+						"type": "String"
+					},
+					{
+						"name": "INVENTORYITEMBASEPEOUNITLENGTH",
+						"type": "String"
+					},
+					{
+						"name": "INVENTORYITEMBASEPEOUNITWIDTH",
+						"type": "String"
+					},
+					{
+						"name": "INVENTORYITEMID",
+						"type": "String"
+					},
+					{
+						"name": "INVENTORYITEMTRANSLATIONPEODESCRIPTION",
+						"type": "String"
+					},
+					{
+						"name": "ITEMCLASSBASEPEOITEMCLASSCODE",
+						"type": "String"
+					},
+					{
+						"name": "ITEMCLASSBASEPEOITEMCLASSID",
+						"type": "String"
+					},
+					{
+						"name": "ITEMCLASSTRANPEOITEMCLASSID",
+						"type": "String"
+					},
+					{
+						"name": "ITEMCLASSTRANPEOITEMCLASSNAME",
+						"type": "String"
+					},
+					{
+						"name": "ITEMORGANIZATIONPARAMETERPEOORGANIZATIONCODE",
+						"type": "String"
+					},
+					{
+						"name": "ORGANIZATIONID",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureDataLakeStorage1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/samplefile')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureDataLakeStorage1",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "adls"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "CT_PRODUCT_D_STG.csv",
+						"fileSystem": "sourcefiles"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "PRODUCT_NUM",
+						"type": "String"
+					},
+					{
+						"name": "PRODUCT_NAME",
+						"type": "String"
+					},
+					{
+						"name": "PRODUCT_TYPE_CODE",
+						"type": "String"
+					},
+					{
+						"name": "PRODUCT_TYPE_DESC",
+						"type": "String"
+					},
+					{
+						"name": "BASIC_PRODUCT",
+						"type": "String"
+					},
+					{
+						"name": "CONFIG_PROD_IND",
+						"type": "String"
+					},
+					{
+						"name": "CONTAINER_CODE",
+						"type": "String"
+					},
+					{
+						"name": "CONTAINER_DESC",
+						"type": "String"
+					},
+					{
+						"name": "MAKE_BUY_IND",
+						"type": "String"
+					},
+					{
+						"name": "PROD_GRP_CODE",
+						"type": "String"
+					},
+					{
+						"name": "PROD_GRP_DESC",
+						"type": "String"
+					},
+					{
+						"name": "STORAGE_TYPE_CODE",
+						"type": "String"
+					},
+					{
+						"name": "STORAGE_TYPE_DESC",
+						"type": "String"
+					},
+					{
+						"name": "CUSTOM_PROD_FLAG",
+						"type": "String"
+					},
+					{
+						"name": "RTRN_DEFECTIVE_FLAG",
+						"type": "String"
+					},
+					{
+						"name": "SALES_PROD_FLAG",
+						"type": "String"
+					},
+					{
+						"name": "SALES_SRVC_FLAG",
+						"type": "String"
+					},
+					{
+						"name": "SERIALIZED_FLAG",
+						"type": "String"
+					},
+					{
+						"name": "ITEM_SIZE",
+						"type": "String"
+					},
+					{
+						"name": "VENDOR_LOC",
+						"type": "String"
+					},
+					{
+						"name": "VENDOR_NAME",
+						"type": "String"
+					},
+					{
+						"name": "SALES_UOM_CODE",
+						"type": "String"
+					},
+					{
+						"name": "SALES_UOM_DESC",
+						"type": "String"
+					},
+					{
+						"name": "SERIALIZED_COUNT",
+						"type": "String"
+					},
+					{
+						"name": "SHIP_TYPE_CODE",
+						"type": "String"
+					},
+					{
+						"name": "SHIP_TYPE_DESC",
+						"type": "String"
+					},
+					{
+						"name": "SOURCE_OF_SUPPLY",
+						"type": "String"
+					},
+					{
+						"name": "SPRT_WITHDRAWL_DATE",
+						"type": "String"
+					},
+					{
+						"name": "UOM",
+						"type": "String"
+					},
+					{
+						"name": "BASE_UOM_CODE",
+						"type": "String"
+					},
+					{
+						"name": "BASE_UOM_DESC",
+						"type": "String"
+					},
+					{
+						"name": "UNIT_GROSS_WEIGHT",
+						"type": "String"
+					},
+					{
+						"name": "UNIT_NET_WEIGHT",
+						"type": "String"
+					},
+					{
+						"name": "UNIT_VOLUME",
+						"type": "String"
+					},
+					{
+						"name": "UNIV_PROD_CODE",
+						"type": "String"
+					},
+					{
+						"name": "UNIV_PROD_DESC",
+						"type": "String"
+					},
+					{
+						"name": "APPLICATION_FLAG",
+						"type": "String"
+					},
+					{
+						"name": "GROSS_MRGN",
+						"type": "String"
+					},
+					{
+						"name": "INVENTORY_FLAG",
+						"type": "String"
+					},
+					{
+						"name": "MAKE_CODE",
+						"type": "String"
+					},
+					{
+						"name": "MODEL_CODE",
+						"type": "String"
+					},
+					{
+						"name": "MODEL_YR",
+						"type": "String"
+					},
+					{
+						"name": "ORDERABLE_FLAG",
+						"type": "String"
+					},
+					{
+						"name": "PROD_TYPE",
+						"type": "String"
+					},
+					{
+						"name": "STATUS",
+						"type": "String"
+					},
+					{
+						"name": "SUB_TYPE",
+						"type": "String"
+					},
+					{
+						"name": "UNIT_CONV_FACTOR",
+						"type": "String"
+					},
+					{
+						"name": "PROD_HIER1_CODE",
+						"type": "String"
+					},
+					{
+						"name": "PROD_HIER1_NAME",
+						"type": "String"
+					},
+					{
+						"name": "PROD_HIER2_CODE",
+						"type": "String"
+					},
+					{
+						"name": "PROD_HIER2_NAME",
+						"type": "String"
+					},
+					{
+						"name": "PROD_HIER3_CODE",
+						"type": "String"
+					},
+					{
+						"name": "PROD_HIER3_NAME",
+						"type": "String"
+					},
+					{
+						"name": "PROD_HIER4_CODE",
+						"type": "String"
+					},
+					{
+						"name": "PROD_HIER4_NAME",
+						"type": "String"
+					},
+					{
+						"name": "PROD_HIER5_CODE",
+						"type": "String"
+					},
+					{
+						"name": "PROD_HIER5_NAME",
+						"type": "String"
+					},
+					{
+						"name": "PROD_HIER6_CODE",
+						"type": "String"
+					},
+					{
+						"name": "PROD_HIER6_NAME",
+						"type": "String"
+					},
+					{
+						"name": "PROD_CAT1_KEY",
+						"type": "String"
+					},
+					{
+						"name": "PROD_CAT2_KEY",
+						"type": "String"
+					},
+					{
+						"name": "PROD_CAT3_KEY",
+						"type": "String"
+					},
+					{
+						"name": "PROD_CAT4_KEY",
+						"type": "String"
+					},
+					{
+						"name": "PROD_CAT5_KEY",
+						"type": "String"
+					},
+					{
+						"name": "PROD_CAT6_KEY",
+						"type": "String"
+					},
+					{
+						"name": "PROD_CAT7_KEY",
+						"type": "String"
+					},
+					{
+						"name": "PROD_CAT8_KEY",
+						"type": "String"
+					},
+					{
+						"name": "PROD_CAT9_KEY",
+						"type": "String"
+					},
+					{
+						"name": "PROD_CAT10_KEY",
+						"type": "String"
+					},
+					{
+						"name": "PRODUCT_CATEGORY_FLAG",
+						"type": "String"
+					},
+					{
+						"name": "ATTRIBUTE1",
+						"type": "String"
+					},
+					{
+						"name": "ATTRIBUTE2",
+						"type": "String"
+					},
+					{
+						"name": "ATTRIBUTE3",
+						"type": "String"
+					},
+					{
+						"name": "ATTRIBUTE4",
+						"type": "String"
+					},
+					{
+						"name": "ATTRIBUTE5",
+						"type": "String"
+					},
+					{
+						"name": "CREATION_DATE",
+						"type": "String"
+					},
+					{
+						"name": "LAST_UPDATE_DATE",
+						"type": "String"
+					},
+					{
+						"name": "CREATED_BY",
+						"type": "String"
+					},
+					{
+						"name": "LAST_UPDATED_BY",
+						"type": "String"
+					},
+					{
+						"name": "INTEGRATION_ID",
+						"type": "String"
+					},
+					{
+						"name": "DATASOURCE_NUM_ID",
+						"type": "String"
+					},
+					{
+						"name": "CURRENT_FLAG",
+						"type": "String"
+					},
+					{
+						"name": "DELETE_FLAG",
+						"type": "String"
+					},
+					{
+						"name": "W_INSERT_DT",
+						"type": "String"
+					},
+					{
+						"name": "W_UPDATE_DT",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureDataLakeStorage1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/suppliertarget')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureDataLakeStorage1",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "test1.csv",
+						"folderPath": "damu",
+						"fileSystem": "adlsstorage"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureDataLakeStorage1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureDataLakeStorage1')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('AzureDataLakeStorage1_properties_typeProperties_url')]",
+					"accountKey": {
+						"type": "SecureString",
+						"value": "[parameters('AzureDataLakeStorage1_accountKey')]"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureSqlDatabase1')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureSqlDatabase",
+				"typeProperties": {
+					"connectionString": "[parameters('AzureSqlDatabase1_connectionString')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/SqlServer1')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "SqlServer",
+				"typeProperties": {
+					"connectionString": "[parameters('SqlServer1_connectionString')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Airflow1')]",
+			"type": "Microsoft.DataFactory/factories/integrationRuntimes",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "Airflow",
+				"typeProperties": {
+					"computeProperties": {
+						"location": "East US",
+						"computeSize": "Large",
+						"extraNodes": 0,
+						"enableAutoscale": false
+					},
+					"airflowProperties": {
+						"airflowVersion": "2.4.3",
+						"airflowWebUrl": "https://13611984781690.eastus.airflow.svc.datafactory.azure.com/login/",
+						"airflowRequirements": [],
+						"enableAADIntegration": true,
+						"airflowEntityReferences": [],
+						"encryptedSecrets": [],
+						"secrets": []
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/integrationRuntime2')]",
+			"type": "Microsoft.DataFactory/factories/integrationRuntimes",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "SelfHosted",
+				"typeProperties": {}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DF_GOLD_LAYER')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "Archrock - DEV"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "DS_ADLS_Archrock",
+								"type": "DatasetReference"
+							},
+							"name": "sourceview"
+						}
+					],
+					"sinks": [
+						{
+							"linkedService": {
+								"referenceName": "AzureDataLakeStorage1",
+								"type": "LinkedServiceReference"
+							},
+							"name": "deltatarget"
+						}
+					],
+					"transformations": [],
+					"scriptLines": [
+						"parameters{",
+						"     sql_query as string ('sqlquery'),",
+						"     target_folder_name as string ('folder_name'),",
+						"     target_conatiner_name as string ('gold-dimensional-model')",
+						"}",
+						"source(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     query: ($sql_query),",
+						"     format: 'query') ~> sourceview",
+						"sourceview sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     format: 'delta',",
+						"     fileSystem: ($target_conatiner_name),",
+						"     folderPath: ($target_folder_name),",
+						"     truncate: true,",
+						"     mergeSchema: false,",
+						"     autoCompact: false,",
+						"     optimizedWrite: false,",
+						"     vacuum: 0,",
+						"     deletable: false,",
+						"     insertable: true,",
+						"     updateable: false,",
+						"     upsertable: false,",
+						"     umask: 0777,",
+						"     preCommands: [],",
+						"     postCommands: [],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     saveOrder: 1) ~> deltatarget"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/DS_ADLS_Archrock')]",
+				"[concat(variables('factoryId'), '/linkedServices/AzureDataLakeStorage1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/POC_Dataflow1')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "MB folder/oldfiles/DataLake POC"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "customers",
+								"type": "DatasetReference"
+							},
+							"name": "customerinput"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "customertarget",
+								"type": "DatasetReference"
+							},
+							"name": "customertarget"
+						}
+					],
+					"transformations": [
+						{
+							"name": "filter1"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          CUST_ID as string,",
+						"          CUST_FIRST_NAME as string,",
+						"          CUST_LAST_NAME as string,",
+						"          CUST_GENDER as string,",
+						"          CUST_YEAR_OF_BIRTH as string,",
+						"          CUST_MARITAL_STATUS as string,",
+						"          CUST_STREET_ADDRESS as string,",
+						"          CUST_POSTAL_CODE as string,",
+						"          CUST_CITY as string,",
+						"          CUST_CITY_ID as string,",
+						"          CUST_STATE_PROVINCE as string,",
+						"          CUST_STATE_PROVINCE_ID as string,",
+						"          COUNTRY_ID as string,",
+						"          CUST_MAIN_PHONE_NUMBER as string,",
+						"          CUST_INCOME_LEVEL as string,",
+						"          CUST_CREDIT_LIMIT as string,",
+						"          CUST_EMAIL as string,",
+						"          CUST_TOTAL as string,",
+						"          CUST_TOTAL_ID as string,",
+						"          CUST_SRC_ID as string,",
+						"          CUST_EFF_FROM as string,",
+						"          CUST_EFF_TO as string,",
+						"          CUST_VALID as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false,",
+						"     partitionBy('hash', 1)) ~> customerinput",
+						"customerinput filter(CUST_LAST_NAME=='Abrams') ~> filter1",
+						"filter1 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          INVENTORYITEMBASEPEOITEMCATALOGGROUPID as string,",
+						"          INVENTORYITEMBASEPEOITEMNUMBER as string,",
+						"          INVENTORYITEMBASEPEOITEMTYPE as string,",
+						"          INVENTORYITEMBASEPEOPRIMARYUOMCODE as string,",
+						"          INVENTORYITEMBASEPEOUNITHEIGHT as string,",
+						"          INVENTORYITEMBASEPEOUNITLENGTH as string,",
+						"          INVENTORYITEMBASEPEOUNITWIDTH as string,",
+						"          INVENTORYITEMID as string,",
+						"          INVENTORYITEMTRANSLATIONPEODESCRIPTION as string,",
+						"          ITEMCLASSBASEPEOITEMCLASSCODE as string,",
+						"          ITEMCLASSBASEPEOITEMCLASSID as string,",
+						"          ITEMCLASSTRANPEOITEMCLASSID as string,",
+						"          ITEMCLASSTRANPEOITEMCLASSNAME as string,",
+						"          ITEMORGANIZATIONPARAMETERPEOORGANIZATIONCODE as string,",
+						"          ORGANIZATIONID as string",
+						"     ),",
+						"     umask: 0022,",
+						"     preCommands: [],",
+						"     postCommands: [],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> customertarget"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/customers')]",
+				"[concat(variables('factoryId'), '/datasets/customertarget')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/POC_Dataflow2_two_flows')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "MB folder/oldfiles/DataLake POC"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "customers1",
+								"type": "DatasetReference"
+							},
+							"name": "Sourcecustomers"
+						},
+						{
+							"dataset": {
+								"referenceName": "customers1",
+								"type": "DatasetReference"
+							},
+							"name": "source1"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "SqlServercustomertabletarget",
+								"type": "DatasetReference"
+							},
+							"name": "sink1"
+						},
+						{
+							"dataset": {
+								"referenceName": "SqlServercustomertabletarget",
+								"type": "DatasetReference"
+							},
+							"name": "sink2"
+						}
+					],
+					"transformations": [
+						{
+							"name": "AlterRow1"
+						},
+						{
+							"name": "derivedColumn1"
+						},
+						{
+							"name": "MARITALSTATUS"
+						},
+						{
+							"name": "aggregate1"
+						},
+						{
+							"name": "sort1"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          CUST_ID as string,",
+						"          CUST_FIRST_NAME as string,",
+						"          CUST_LAST_NAME as string,",
+						"          CUST_GENDER as string,",
+						"          CUST_YEAR_OF_BIRTH as string,",
+						"          CUST_MARITAL_STATUS as string,",
+						"          CUST_STREET_ADDRESS as string,",
+						"          CUST_POSTAL_CODE as string,",
+						"          CUST_CITY as string,",
+						"          CUST_CITY_ID as string,",
+						"          CUST_STATE_PROVINCE as string,",
+						"          CUST_STATE_PROVINCE_ID as string,",
+						"          COUNTRY_ID as string,",
+						"          CUST_MAIN_PHONE_NUMBER as string,",
+						"          CUST_INCOME_LEVEL as string,",
+						"          CUST_CREDIT_LIMIT as string,",
+						"          CUST_EMAIL as string,",
+						"          CUST_TOTAL as string,",
+						"          CUST_TOTAL_ID as string,",
+						"          CUST_SRC_ID as string,",
+						"          CUST_EFF_FROM as string,",
+						"          CUST_EFF_TO as string,",
+						"          CUST_VALID as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false,",
+						"     partitionBy('hash', 1)) ~> Sourcecustomers",
+						"source(output(",
+						"          CUST_ID as string,",
+						"          CUST_FIRST_NAME as string,",
+						"          CUST_LAST_NAME as string,",
+						"          CUST_GENDER as string,",
+						"          CUST_YEAR_OF_BIRTH as string,",
+						"          CUST_MARITAL_STATUS as string,",
+						"          CUST_STREET_ADDRESS as string,",
+						"          CUST_POSTAL_CODE as string,",
+						"          CUST_CITY as string,",
+						"          CUST_CITY_ID as string,",
+						"          CUST_STATE_PROVINCE as string,",
+						"          CUST_STATE_PROVINCE_ID as string,",
+						"          COUNTRY_ID as string,",
+						"          CUST_MAIN_PHONE_NUMBER as string,",
+						"          CUST_INCOME_LEVEL as string,",
+						"          CUST_CREDIT_LIMIT as string,",
+						"          CUST_EMAIL as string,",
+						"          CUST_TOTAL as string,",
+						"          CUST_TOTAL_ID as string,",
+						"          CUST_SRC_ID as string,",
+						"          CUST_EFF_FROM as string,",
+						"          CUST_EFF_TO as string,",
+						"          CUST_VALID as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> source1",
+						"derivedColumn1 alterRow(upsertIf(true())) ~> AlterRow1",
+						"MARITALSTATUS derive(column1 = upper(CUST_FIRST_NAME)) ~> derivedColumn1",
+						"Sourcecustomers filter(CUST_MARITAL_STATUS=='married') ~> MARITALSTATUS",
+						"AlterRow1 aggregate(groupBy(CUST_FIRST_NAME,",
+						"          CUST_ID,",
+						"          CUST_LAST_NAME,",
+						"          CUST_GENDER,",
+						"          CUST_YEAR_OF_BIRTH,",
+						"          CUST_VALID,",
+						"          CUST_INCOME_LEVEL),",
+						"     CUST_CREDIT_LIMIT = sum(toInteger(CUST_CREDIT_LIMIT))) ~> aggregate1",
+						"aggregate1 sort(asc(CUST_FIRST_NAME, true),",
+						"     asc(CUST_LAST_NAME, true),",
+						"     asc(CUST_GENDER, true),",
+						"     asc(CUST_VALID, true),",
+						"     desc(CUST_INCOME_LEVEL, true),",
+						"     asc(CUST_INCOME_LEVEL, true),",
+						"     asc(CUST_ID, true)) ~> sort1",
+						"sort1 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          CUST_ID as integer,",
+						"          CUST_FIRST_NAME as string,",
+						"          CUST_LAST_NAME as string,",
+						"          CUST_GENDER as string,",
+						"          CUST_YEAR_OF_BIRTH as integer,",
+						"          CUST_MARITAL_STATUS as string,",
+						"          CUST_STREET_ADDRESS as string,",
+						"          CUST_POSTAL_CODE as string,",
+						"          CUST_CITY as string,",
+						"          CUST_CITY_ID as integer,",
+						"          CUST_STATE_PROVINCE as string,",
+						"          CUST_STATE_PROVINCE_ID as integer,",
+						"          COUNTRY_ID as integer,",
+						"          CUST_MAIN_PHONE_INT as string,",
+						"          CUST_INCOME_LEVEL as string,",
+						"          CUST_CREDIT_LIMIT as integer,",
+						"          CUST_EMAIL as string,",
+						"          CUST_TOTAL as string,",
+						"          CUST_TOTAL_ID as integer,",
+						"          CUST_SRC_ID as integer,",
+						"          CUST_EFF_FROM as date,",
+						"          CUST_EFF_TO as date,",
+						"          CUST_VALID as string",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:false,",
+						"     updateable:false,",
+						"     upsertable:true,",
+						"     keys:['CUST_ID'],",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     mapColumn(",
+						"          CUST_ID,",
+						"          CUST_FIRST_NAME,",
+						"          CUST_LAST_NAME,",
+						"          CUST_GENDER,",
+						"          CUST_INCOME_LEVEL,",
+						"          CUST_CREDIT_LIMIT,",
+						"          CUST_VALID",
+						"     )) ~> sink1",
+						"source1 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          CUST_ID as integer,",
+						"          CUST_FIRST_NAME as string,",
+						"          CUST_LAST_NAME as string,",
+						"          CUST_GENDER as string,",
+						"          CUST_YEAR_OF_BIRTH as integer,",
+						"          CUST_MARITAL_STATUS as string,",
+						"          CUST_STREET_ADDRESS as string,",
+						"          CUST_POSTAL_CODE as string,",
+						"          CUST_CITY as string,",
+						"          CUST_CITY_ID as integer,",
+						"          CUST_STATE_PROVINCE as string,",
+						"          CUST_STATE_PROVINCE_ID as integer,",
+						"          COUNTRY_ID as integer,",
+						"          CUST_MAIN_PHONE_INT as string,",
+						"          CUST_INCOME_LEVEL as string,",
+						"          CUST_CREDIT_LIMIT as integer,",
+						"          CUST_EMAIL as string,",
+						"          CUST_TOTAL as string,",
+						"          CUST_TOTAL_ID as integer,",
+						"          CUST_SRC_ID as integer,",
+						"          CUST_EFF_FROM as date,",
+						"          CUST_EFF_TO as date,",
+						"          CUST_VALID as string",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     truncate:true,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> sink2"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/customers1')]",
+				"[concat(variables('factoryId'), '/datasets/SqlServercustomertabletarget')]"
+			]
+		}
+	]
+}
