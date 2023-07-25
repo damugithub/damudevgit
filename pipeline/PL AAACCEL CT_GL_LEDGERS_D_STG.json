@@ -1,0 +1,223 @@
+{
+	"name": "PL AAACCEL CT_GL_LEDGERS_D_STG",
+	"properties": {
+		"description": "Pipeline to extract data into CT_GL_LEDGERS_D_STG table in AAACCEL schema.",
+		"activities": [
+			{
+				"name": "CT_GL_LEDGERS_D_STG",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [
+					{
+						"name": "Source",
+						"value": "."
+					},
+					{
+						"name": "Destination",
+						"value": "AAAccel.CT_GL_LEDGERS_D_STG"
+					}
+				],
+				"typeProperties": {
+					"source": {
+						"type": "OracleSource",
+						"oracleReaderQuery": "/*CT_GL_LEDGERS_D_STG*/\r\nSELECT\r\n    LEDGER_ID AS LEDGER_ID,\r\n    CHART_OF_ACCOUNTS_ID AS COA_ID,\r\n    NAME AS LEDGER_NAME,\r\n    SHORT_NAME AS LEDGER_SHORT_NAME,\r\n    DESCRIPTION AS DESCRIPTION,\r\n    LEDGER_CATEGORY_CODE AS LEDGER_CATEGORY_CODE,\r\n    (CASE WHEN OBJECT_TYPE_CODE='L' then 'Ledger' \r\n    when OBJECT_TYPE_CODE='S' then 'Ledger Set' \r\n    Else OBJECT_TYPE_CODE END) AS LEDGER_TYPE,\r\n    CURRENCY_CODE AS LEDGER_CURR_CODE,\r\n    TO_TIMESTAMP(CREATION_DATE) CREATION_DT,\r\n    TO_TIMESTAMP(LAST_UPDATE_DATE) LAST_UPDATE_DT,\r\n    CREATED_BY,\r\n    LAST_UPDATED_BY,\r\n    LEDGER_ID AS INTEGRATION_ID,\r\n    1000 AS DATASOURCE_NUM_ID\r\nFROM\r\n    GL_LEDGERS\r\nWHERE 1=1\r\n--AND TO_CHAR(GL_LEDGERS.LAST_UPDATE_DATE, 'YYYY-MM-DD HH24:MI:SS') >= '2006-11-01'\r\n;",
+						"partitionOption": "None"
+					},
+					"sink": {
+						"type": "AzureSqlSink"
+					},
+					"enableStaging": false,
+					"validateDataConsistency": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "LEDGER_ID",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "LEDGER_ID",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "COA_ID",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "COA_ID",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "LEDGER_NAME",
+									"type": "String"
+								},
+								"sink": {
+									"name": "LEDGER_NAME",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "LEDGER_SHORT_NAME",
+									"type": "String"
+								},
+								"sink": {
+									"name": "LEDGER_SHORT_NAME",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "DESCRIPTION",
+									"type": "String"
+								},
+								"sink": {
+									"name": "DESCRIPTION",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "LEDGER_CATEGORY_CODE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "LEDGER_CATEGORY_CODE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "LEDGER_TYPE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "LEDGER_TYPE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "LEDGER_CURR_CODE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "LEDGER_CURR_CODE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "CREATION_DT",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "CREATION_DT",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								}
+							},
+							{
+								"source": {
+									"name": "LAST_UPDATE_DT",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "LAST_UPDATE_DT",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								}
+							},
+							{
+								"source": {
+									"name": "CREATED_BY",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "CREATED_BY",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "LAST_UPDATED_BY",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "LAST_UPDATED_BY",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "INTEGRATION_ID",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "INTEGRATION_ID",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "DATASOURCE_NUM_ID",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "DATASOURCE_NUM_ID",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							}
+						],
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "SourceDataset_pq6",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DestinationDataset_pq6",
+						"type": "DatasetReference"
+					}
+				]
+			}
+		],
+		"folder": {
+			"name": "Raja Puranam - DEV/Anchor Packaging V1 - Dont Touch/Source to Stage/GL"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-01-25T14:20:38Z"
+	}
+}

@@ -1,0 +1,353 @@
+{
+	"name": "PL AAACCEL CT_LEGAL_ENTITY_D_STG",
+	"properties": {
+		"description": "Pipeline to extract data into CT_LEGAL_ENTITY_D_STG table in AAACCEL schema.",
+		"activities": [
+			{
+				"name": "CT_LEGAL_ENTITY_D_STG",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [
+					{
+						"name": "Source",
+						"value": "."
+					},
+					{
+						"name": "Destination",
+						"value": "AAAccel.CT_LEGAL_ENTITY_D_STG"
+					}
+				],
+				"typeProperties": {
+					"source": {
+						"type": "OracleSource",
+						"oracleReaderQuery": "/*CT_LEGAL_ENTITY_D_STG*/\nSELECT XEP.LEGAL_ENTITY_ID AS LEGAL_ENTITY_ID,\n  XEP.LEGAL_ENTITY_IDENTIFIER AS LEGAL_ENTITY_NUM,\n  XEP.NAME                 AS LEGAL_ENTITY_NAME,\n  Location.LOCATION_ID     AS LOCATION_ID,\n  '-'                      AS LEGAL_EMPLOYER_FLAG,\n  Location.ADDRESS1        AS ADDRESS1,\n  Location.ADDRESS2        AS ADDRESS2,\n  Location.ADDRESS3        AS ADDRESS3,\n  Location.ADDRESS4        AS ADDRESS4,\n  Location.CITY            AS CITY,\n  Location.STATE           AS STATE,\n  Location.COUNTY          AS COUNTY,\n  Location.PROVINCE        AS PROVINCE,\n  Location.COUNTRY         AS COUNTRY,\n  Location.POSTAL_CODE     AS POSTAL_CODE,\n  XEP.ATTRIBUTE1           AS ATTRIBUTE1  ,\n  XEP.ATTRIBUTE2           AS ATTRIBUTE2  ,\n  XEP.ATTRIBUTE3           AS ATTRIBUTE3  ,\n  XEP.ATTRIBUTE4           AS ATTRIBUTE4  ,\n  XEP.ATTRIBUTE5           AS ATTRIBUTE5  ,\n  TO_TIMESTAMP(XEP.CREATION_DATE) AS CREATION_DT,\n  TO_TIMESTAMP(XEP.LAST_UPDATE_DATE) AS LAST_UPDATE_DT,\n  XEP.CREATED_BY,\n  XEP.LAST_UPDATED_BY,\n  XEP.LEGAL_ENTITY_ID                                AS INTEGRATION_ID,\n  1000                                               AS DATASOURCE_NUM_ID\nFROM XLE_ENTITY_PROFILES XEP,\n  XLE_REGISTRATIONS Registration,\n  HZ_LOCATIONS Location\nWHERE XEP.LEGAL_ENTITY_ID         = Registration.SOURCE_ID(+)\nAND Registration.SOURCE_TABLE(+)    = ('XLE_ENTITY_PROFILES')\nAND Registration.IDENTIFYING_FLAG(+) =('Y')\nAND XEP.GEOGRAPHY_ID      = Location.LOCATION_ID(+)\n--AND TO_CHAR(XEP.LAST_UPDATE_DATE, 'YYYY-MM-DD HH24:MI:SS') >= '2022-01-01'\n;",
+						"partitionOption": "None"
+					},
+					"sink": {
+						"type": "AzureSqlSink"
+					},
+					"enableStaging": false,
+					"validateDataConsistency": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "LEGAL_ENTITY_ID",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "LEGAL_ENTITY_ID",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "LEGAL_ENTITY_NUM"
+								},
+								"sink": {
+									"name": "LEGAL_ENTITY_NUM",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "LEGAL_ENTITY_NAME",
+									"type": "String"
+								},
+								"sink": {
+									"name": "LEGAL_ENTITY_NAME",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "LOCATION_ID",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "LOCATION_ID",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "LEGAL_EMPLOYER_FLAG",
+									"type": "String"
+								},
+								"sink": {
+									"name": "LEGAL_EMPLOYER_FLAG",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ADDRESS1",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ADDRESS1",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ADDRESS2",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ADDRESS2",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ADDRESS3",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ADDRESS3",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ADDRESS4",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ADDRESS4",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "CITY",
+									"type": "String"
+								},
+								"sink": {
+									"name": "CITY",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "STATE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "STATE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "COUNTY",
+									"type": "String"
+								},
+								"sink": {
+									"name": "COUNTY",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "PROVINCE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "PROVINCE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "COUNTRY",
+									"type": "String"
+								},
+								"sink": {
+									"name": "COUNTRY",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "POSTAL_CODE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "POSTAL_CODE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE1",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE1",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE2",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE2",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE3",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE3",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE4",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE4",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE5",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE5",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "CREATION_DT",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "CREATION_DT",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								}
+							},
+							{
+								"source": {
+									"name": "LAST_UPDATE_DT",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "LAST_UPDATE_DT",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								}
+							},
+							{
+								"source": {
+									"name": "CREATED_BY",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "CREATED_BY",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "LAST_UPDATED_BY",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "LAST_UPDATED_BY",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "INTEGRATION_ID",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "INTEGRATION_ID",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "DATASOURCE_NUM_ID",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "DATASOURCE_NUM_ID",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							}
+						],
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "SourceDataset_dp0",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DestinationDataset_dp0",
+						"type": "DatasetReference"
+					}
+				]
+			}
+		],
+		"folder": {
+			"name": "Raja Puranam - DEV/Anchor Packaging V1 - Dont Touch/Source to Stage/GL"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-01-25T14:21:05Z"
+	}
+}

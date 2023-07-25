@@ -1,0 +1,256 @@
+{
+	"name": "PL AAACCEL CT_CURRENCY_D_STG",
+	"properties": {
+		"description": "Pipeline to extract data into CT_CURRENCY_D_STG table in AAACCEL schema.",
+		"activities": [
+			{
+				"name": "CT_CURRENCY_D_STG",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [
+					{
+						"name": "Source",
+						"value": "."
+					},
+					{
+						"name": "Destination",
+						"value": "AAAccel.CT_CURRENCY_D_STG"
+					}
+				],
+				"typeProperties": {
+					"source": {
+						"type": "OracleSource",
+						"oracleReaderQuery": "/*CT_CURRENCY_D_STG*/\r\nSELECT\r\n\tCUR.CURRENCY_CODE CURRENCY_ID,\r\n\tCUR.CURRENCY_CODE,\r\n\tTL.LANGUAGE,\r\n\tTL.NAME CURRENCY_NAME,\r\n\tTL.DESCRIPTION CURRENCY_DESCRIPTION,\r\n\tCUR.SYMBOL,\r\n\tCUR.ISSUING_TERRITORY_CODE,\r\n\tCUR.ENABLED_FLAG,\r\n\tCUR.CURRENCY_FLAG,\r\n\tTO_TIMESTAMP(CUR.START_DATE_ACTIVE) START_DT_ACTIVE,\r\n\tTO_TIMESTAMP(CUR.END_DATE_ACTIVE) END_DT_ACTIVE,\r\n\tTO_TIMESTAMP(CUR.CREATION_DATE) CREATION_DT,\r\n\tTO_TIMESTAMP(CUR.LAST_UPDATE_DATE) LAST_UPDATE_DT,\r\n\tCUR.CREATED_BY,\r\n\tCUR.LAST_UPDATED_BY,\r\n\tCUR.CURRENCY_CODE AS  INTEGRATION_ID,\r\n\t1000 DATASOURCE_NUM_ID\r\nFROM \r\n\tFND_CURRENCIES CUR,\r\n\tFND_CURRENCIES_TL TL\r\nWHERE \r\n\tTL.CURRENCY_CODE  =CUR.CURRENCY_CODE\r\n\tAND TL.LANGUAGE='US'\r\n\t--AND TO_CHAR(CUR.LAST_UPDATE_DATE, 'YYYY-MM-DD HH24:MI:SS') >= '2022-01-01'\r\n;",
+						"partitionOption": "None"
+					},
+					"sink": {
+						"type": "AzureSqlSink"
+					},
+					"enableStaging": false,
+					"validateDataConsistency": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "CURRENCY_ID",
+									"type": "String"
+								},
+								"sink": {
+									"name": "CURRENCY_ID",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "CURRENCY_CODE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "CURRENCY_CODE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "LANGUAGE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "LANGUAGE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "CURRENCY_NAME",
+									"type": "String"
+								},
+								"sink": {
+									"name": "CURRENCY_NAME",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "CURRENCY_DESCRIPTION",
+									"type": "String"
+								},
+								"sink": {
+									"name": "CURRENCY_DESCRIPTION",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "SYMBOL",
+									"type": "String"
+								},
+								"sink": {
+									"name": "SYMBOL",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ISSUING_TERRITORY_CODE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ISSUING_TERRITORY_CODE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ENABLED_FLAG",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ENABLED_FLAG",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "CURRENCY_FLAG",
+									"type": "String"
+								},
+								"sink": {
+									"name": "CURRENCY_FLAG",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "START_DT_ACTIVE",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "START_DT_ACTIVE",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								}
+							},
+							{
+								"source": {
+									"name": "END_DT_ACTIVE",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "END_DT_ACTIVE",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								}
+							},
+							{
+								"source": {
+									"name": "CREATION_DT",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "CREATION_DT",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								}
+							},
+							{
+								"source": {
+									"name": "LAST_UPDATE_DT",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "LAST_UPDATE_DT",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								}
+							},
+							{
+								"source": {
+									"name": "CREATED_BY",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "CREATED_BY",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "LAST_UPDATED_BY",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "LAST_UPDATED_BY",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "INTEGRATION_ID",
+									"type": "String"
+								},
+								"sink": {
+									"name": "INTEGRATION_ID",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "DATASOURCE_NUM_ID",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "DATASOURCE_NUM_ID",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							}
+						],
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "SourceDataset_45z",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DestinationDataset_45z",
+						"type": "DatasetReference"
+					}
+				]
+			}
+		],
+		"folder": {
+			"name": "Raja Puranam - DEV/Anchor Packaging V1 - Dont Touch/Source to Stage/CD"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-01-25T14:19:55Z"
+	}
+}

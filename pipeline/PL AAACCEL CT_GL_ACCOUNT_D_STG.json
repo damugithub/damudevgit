@@ -1,0 +1,553 @@
+{
+	"name": "PL AAACCEL CT_GL_ACCOUNT_D_STG",
+	"properties": {
+		"description": "Pipeline to extract data into CT_GL_ACCOUNT_D_STG table in AAACCEL schema.",
+		"activities": [
+			{
+				"name": "CT_GL_ACCOUNT_D_STG",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [
+					{
+						"name": "Source",
+						"value": "."
+					},
+					{
+						"name": "Destination",
+						"value": "AAAccel.CT_GL_ACCOUNT_D_STG"
+					}
+				],
+				"typeProperties": {
+					"source": {
+						"type": "OracleSource",
+						"oracleReaderQuery": "/*CT_GL_ACCOUNT_D_STG*/\r\nselect\r\n\tGCC.CODE_COMBINATION_ID                           AS  GLCC_ID,\r\n\tGCC.CHART_OF_ACCOUNTS_ID                                AS  COA_ID,\r\n\tGCC.SEGMENT1,\r\n\tFFVVC1.DESCRIPTION AS SEGMENT1_DESC,\r\n\tGCC.SEGMENT1||'~'||FFVVC1.DESCRIPTION AS CONCAT_SEGMENT1,\r\n\tGCC.SEGMENT2,\r\n\tFFVVC2.DESCRIPTION AS SEGMENT2_DESC,\r\n\tGCC.SEGMENT2||'~'||FFVVC2.DESCRIPTION AS CONCAT_SEGMENT2,\r\n\tGCC.SEGMENT3,\r\n\tFFVVC3.DESCRIPTION AS SEGMENT3_DESC,\r\n\tGCC.SEGMENT3||'~'||FFVVC3.DESCRIPTION AS CONCAT_SEGMENT3,\r\n\tGCC.SEGMENT4,\r\n\tFFVVC4.DESCRIPTION AS SEGMENT4_DESC,\r\n\tGCC.SEGMENT4||'~'||FFVVC4.DESCRIPTION AS CONCAT_SEGMENT4,\r\n\tGCC.SEGMENT5,\r\n\t'-' AS SEGMENT5_DESC,\r\n\t'-' AS CONCAT_SEGMENT5,\r\n\tGCC.SEGMENT6,\r\n\t'-' AS SEGMENT6_DESC,\r\n\t'-' AS CONCAT_SEGMENT6,\r\n\tGCC.SEGMENT7,\r\n\t'-' AS SEGMENT7_DESC,\r\n\t'-' AS CONCAT_SEGMENT7,\r\n\tGCC.SEGMENT8,\r\n\t'-' AS SEGMENT8_DESC,\r\n\t'-' AS CONCAT_SEGMENT8,\r\n\tGCC.SEGMENT9,\r\n\t'-' AS SEGMENT9_DESC,\r\n\t'-' AS CONCAT_SEGMENT9,\r\n\tGCC.SEGMENT1||'.'||GCC.SEGMENT2||'.'||GCC.SEGMENT3||'.'||GCC.SEGMENT4||'.'||GCC.SEGMENT5||'.'||GCC.SEGMENT6||'.'||GCC.SEGMENT7||'.'||GCC.SEGMENT8||'.'||GCC.SEGMENT9 AS CONCAT_SEGMENT_CODE,\r\n\tFFVVC1.DESCRIPTION||'.'||FFVVC2.DESCRIPTION||'.'||FFVVC3.DESCRIPTION||'.'||FFVVC4.DESCRIPTION AS CONCAT_SEGMENT_DESC,\r\n\t'-' AS GROUP_ACCT_CODE                       ,\r\n\t'-' AS GROUP_ACCT_NAME                       ,\r\n\tGCC.ACCOUNT_TYPE          AS   ACCOUNT_TYPE              ,\r\n\tGCC.ENABLED_FLAG          AS   ENABLED_FLAG              ,\r\n\tGCC.SUMMARY_FLAG          AS   SUMMARY_FLAG              ,\r\n\tTO_TIMESTAMP(GCC.START_DATE_ACTIVE)     AS   START_DT_ACTIVE         ,\r\n\tTO_TIMESTAMP(GCC.END_DATE_ACTIVE)       AS   END_DT_ACTIVE           ,\r\n\tNULL           AS   CREATION_DT               ,\r\n\tTO_TIMESTAMP(GCC.LAST_UPDATE_DATE)        AS   LAST_UPDATE_DT            ,\r\n\tNULL           AS   CREATED_BY                ,\r\n\tGCC.LAST_UPDATED_BY       AS   LAST_UPDATED_BY           ,\r\n\tGCC.CODE_COMBINATION_ID   AS  INTEGRATION_ID              ,\r\n\t1000                      AS  DATASOURCE_NUM_ID\r\nfrom \r\n\tgl_code_combinations gcc,\r\n\t/*Segment1*/\r\n\tFND_ID_FLEX_SEGMENTS FIFSC1\r\n\t,FND_FLEX_VALUE_SETS FFVSC1\r\n\t,FND_FLEX_VALUES_VL FFVVC1\r\n\t/*Segment2*/\r\n\t,FND_ID_FLEX_SEGMENTS FIFSC2\r\n\t,FND_FLEX_VALUE_SETS FFVSC2\r\n\t,FND_FLEX_VALUES_VL FFVVC2\r\n\t/*Segment3*/\r\n\t,FND_ID_FLEX_SEGMENTS FIFSC3\r\n\t,FND_FLEX_VALUE_SETS FFVSC3\r\n\t,FND_FLEX_VALUES_VL FFVVC3\r\n\t/*Segment4*/\r\n\t,FND_ID_FLEX_SEGMENTS FIFSC4\r\n\t,FND_FLEX_VALUE_SETS FFVSC4\r\n\t,FND_FLEX_VALUES_VL FFVVC4\r\nwhere 1=1\r\n\tand FFVVC1.FLEX_VALUE = GCC.SEGMENT1\r\n\tAND FIFSC1.segment_num = 1\r\n\tand FIFSC1.ID_FLEX_CODE = 'GL#'\r\n\tand FIFSC1.id_flex_num =  GCC.CHART_OF_ACCOUNTS_ID\r\n\tand FFVSC1.FLEX_VALUE_SET_ID=FIFSC1.FLEX_VALUE_SET_ID\r\n\tand FFVVC1.FLEX_VALUE_SET_ID=FFVSC1.FLEX_VALUE_SET_ID\r\n\t/*Segment2*/\r\n\tAND FFVVC2.FLEX_VALUE = GCC.SEGMENT2\r\n\tAND FIFSC2.segment_num = 2\r\n\tand FIFSC2.ID_FLEX_CODE = 'GL#'\r\n\tand FIFSC2.id_flex_num =  GCC.CHART_OF_ACCOUNTS_ID\r\n\tand FFVSC2.FLEX_VALUE_SET_ID=FIFSC2.FLEX_VALUE_SET_ID\r\n\tand FFVVC2.FLEX_VALUE_SET_ID=FFVSC2.FLEX_VALUE_SET_ID\r\n\t/*Segment3*/\r\n\tAND FFVVC3.FLEX_VALUE = GCC.SEGMENT3\r\n\tAND FIFSC3.segment_num = 3\r\n\tand FIFSC3.ID_FLEX_CODE = 'GL#'\r\n\tand FIFSC3.id_flex_num =  GCC.CHART_OF_ACCOUNTS_ID\r\n\tand FFVSC3.FLEX_VALUE_SET_ID=FIFSC3.FLEX_VALUE_SET_ID\r\n\tand FFVVC3.FLEX_VALUE_SET_ID=FFVSC3.FLEX_VALUE_SET_ID\r\n\t/*Segment4*/\r\n\tAND FFVVC4.FLEX_VALUE = GCC.SEGMENT4\r\n\tAND FIFSC4.segment_num = 4\r\n\tand FIFSC4.ID_FLEX_CODE = 'GL#'\r\n\tand FIFSC4.id_flex_num =  GCC.CHART_OF_ACCOUNTS_ID\r\n\tand FFVSC4.FLEX_VALUE_SET_ID=FIFSC4.FLEX_VALUE_SET_ID\r\n\tand FFVVC4.FLEX_VALUE_SET_ID=FFVSC4.FLEX_VALUE_SET_ID\r\n--\tAND TO_CHAR(GCC.LAST_UPDATE_DATE, 'YYYY-MM-DD HH24:MI:SS') >= '2022-01-01'",
+						"partitionOption": "None"
+					},
+					"sink": {
+						"type": "AzureSqlSink"
+					},
+					"enableStaging": false,
+					"validateDataConsistency": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "GLCC_ID",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "GLCC_ID",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "COA_ID",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "COA_ID",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "SEGMENT1",
+									"type": "String"
+								},
+								"sink": {
+									"name": "SEGMENT1",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "SEGMENT1_DESC",
+									"type": "String"
+								},
+								"sink": {
+									"name": "SEGMENT1_DESC",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "CONCAT_SEGMENT1",
+									"type": "String"
+								},
+								"sink": {
+									"name": "CONCAT_SEGMENT1",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "SEGMENT2",
+									"type": "String"
+								},
+								"sink": {
+									"name": "SEGMENT2",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "SEGMENT2_DESC",
+									"type": "String"
+								},
+								"sink": {
+									"name": "SEGMENT2_DESC",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "CONCAT_SEGMENT2",
+									"type": "String"
+								},
+								"sink": {
+									"name": "CONCAT_SEGMENT2",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "SEGMENT3",
+									"type": "String"
+								},
+								"sink": {
+									"name": "SEGMENT3",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "SEGMENT3_DESC",
+									"type": "String"
+								},
+								"sink": {
+									"name": "SEGMENT3_DESC",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "CONCAT_SEGMENT3",
+									"type": "String"
+								},
+								"sink": {
+									"name": "CONCAT_SEGMENT3",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "SEGMENT4",
+									"type": "String"
+								},
+								"sink": {
+									"name": "SEGMENT4",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "SEGMENT4_DESC",
+									"type": "String"
+								},
+								"sink": {
+									"name": "SEGMENT4_DESC",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "CONCAT_SEGMENT4",
+									"type": "String"
+								},
+								"sink": {
+									"name": "CONCAT_SEGMENT4",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "SEGMENT5",
+									"type": "String"
+								},
+								"sink": {
+									"name": "SEGMENT5",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "SEGMENT5_DESC",
+									"type": "String"
+								},
+								"sink": {
+									"name": "SEGMENT5_DESC",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "CONCAT_SEGMENT5",
+									"type": "String"
+								},
+								"sink": {
+									"name": "CONCAT_SEGMENT5",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "SEGMENT6",
+									"type": "String"
+								},
+								"sink": {
+									"name": "SEGMENT6",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "SEGMENT6_DESC",
+									"type": "String"
+								},
+								"sink": {
+									"name": "SEGMENT6_DESC",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "CONCAT_SEGMENT6",
+									"type": "String"
+								},
+								"sink": {
+									"name": "CONCAT_SEGMENT6",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "SEGMENT7",
+									"type": "String"
+								},
+								"sink": {
+									"name": "SEGMENT7",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "SEGMENT7_DESC",
+									"type": "String"
+								},
+								"sink": {
+									"name": "SEGMENT7_DESC",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "CONCAT_SEGMENT7",
+									"type": "String"
+								},
+								"sink": {
+									"name": "CONCAT_SEGMENT7",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "SEGMENT8",
+									"type": "String"
+								},
+								"sink": {
+									"name": "SEGMENT8",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "SEGMENT8_DESC",
+									"type": "String"
+								},
+								"sink": {
+									"name": "SEGMENT8_DESC",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "CONCAT_SEGMENT8",
+									"type": "String"
+								},
+								"sink": {
+									"name": "CONCAT_SEGMENT8",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "SEGMENT9",
+									"type": "String"
+								},
+								"sink": {
+									"name": "SEGMENT9",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "SEGMENT9_DESC",
+									"type": "String"
+								},
+								"sink": {
+									"name": "SEGMENT9_DESC",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "CONCAT_SEGMENT9",
+									"type": "String"
+								},
+								"sink": {
+									"name": "CONCAT_SEGMENT9",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "CONCAT_SEGMENT_CODE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "CONCAT_SEGMENT_CODE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "CONCAT_SEGMENT_DESC",
+									"type": "String"
+								},
+								"sink": {
+									"name": "CONCAT_SEGMENT_DESC",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "GROUP_ACCT_CODE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "GROUP_ACCT_CODE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "GROUP_ACCT_NAME",
+									"type": "String"
+								},
+								"sink": {
+									"name": "GROUP_ACCT_NAME",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ACCOUNT_TYPE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ACCOUNT_TYPE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ENABLED_FLAG",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ENABLED_FLAG",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "SUMMARY_FLAG",
+									"type": "String"
+								},
+								"sink": {
+									"name": "SUMMARY_FLAG",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "START_DT_ACTIVE",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "START_DT_ACTIVE",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								}
+							},
+							{
+								"source": {
+									"name": "END_DT_ACTIVE",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "END_DT_ACTIVE",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								}
+							},
+							{
+								"source": {
+									"name": "CREATION_DT",
+									"type": "String"
+								},
+								"sink": {
+									"name": "CREATION_DT",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								}
+							},
+							{
+								"source": {
+									"name": "LAST_UPDATE_DT",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "LAST_UPDATE_DT",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								}
+							},
+							{
+								"source": {
+									"name": "CREATED_BY",
+									"type": "String"
+								},
+								"sink": {
+									"name": "CREATED_BY",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "LAST_UPDATED_BY",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "LAST_UPDATED_BY",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "INTEGRATION_ID",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "INTEGRATION_ID",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "DATASOURCE_NUM_ID",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "DATASOURCE_NUM_ID",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							}
+						],
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "SourceDataset_wgq",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DestinationDataset_wgq",
+						"type": "DatasetReference"
+					}
+				]
+			}
+		],
+		"folder": {
+			"name": "Raja Puranam - DEV/Anchor Packaging V1 - Dont Touch/Source to Stage/GL"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-01-25T14:20:07Z"
+	}
+}

@@ -1,0 +1,421 @@
+{
+	"name": "PL AAACCEL CT_GL_DAILY_RATES_D_STG",
+	"properties": {
+		"description": "Pipeline to extract data into CT_GL_DAILY_RATES_D_STG table in AAACCEL schema.",
+		"activities": [
+			{
+				"name": "CT_GL_DAILY_RATES_D_STG",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [
+					{
+						"name": "Source",
+						"value": "."
+					},
+					{
+						"name": "Destination",
+						"value": "AAAccel.CT_GL_DAILY_RATES_D_STG"
+					}
+				],
+				"typeProperties": {
+					"source": {
+						"type": "OracleSource",
+						"oracleReaderQuery": "/*CT_GL_DAILY_RATES_D_STG*/\r\nSelect\r\n\tFROM_CURRENCY,\r\n\tTO_CURRENCY,\r\n\tTO_TIMESTAMP(CONVERSION_DATE ) as CONVERSION_DT,\r\n\tCONVERSION_TYPE,\r\n\tCONVERSION_RATE,\r\n\tSTATUS_CODE,\r\n\tTO_TIMESTAMP(CREATION_DATE ) as CREATION_DT ,\r\n\tCREATED_BY,\r\n\tTO_TIMESTAMP(LAST_UPDATE_DATE ) as LAST_UPDATE_DT ,\r\n\tLAST_UPDATED_BY,\r\n\tLAST_UPDATE_LOGIN,\r\n\tCONTEXT,\r\n\tATTRIBUTE1,\r\n\tATTRIBUTE2,\r\n\tATTRIBUTE3,\r\n\tATTRIBUTE4,\r\n\tATTRIBUTE5,\r\n\tATTRIBUTE6,\r\n\tATTRIBUTE7,\r\n\tATTRIBUTE8,\r\n\tATTRIBUTE9,\r\n\tATTRIBUTE10,\r\n\tATTRIBUTE11,\r\n\tATTRIBUTE12,\r\n\tATTRIBUTE13,\r\n\tATTRIBUTE14,\r\n\tATTRIBUTE15,\r\n\tRATE_SOURCE_CODE,\r\n\tNULL AS OBJECT_VERSION_NUMBER,\r\n\tNULL AS ENTERPRISE_ID,\r\n\tCONVERSION_TYPE||'~'||NVL(FROM_CURRENCY,'')||'~'||NVL(TO_CURRENCY,'')||'~'||NVL(TO_CHAR(CONVERSION_DATE,'YYYYMMDD'),'') AS INTEGRATION_ID,\r\n\t1000 AS DATASOURCE_NUM_ID\r\nfrom \r\n\tGL_DAILY_RATES\r\nwhere \r\n\tconversion_type='Corporate'\r\n\t--AND TO_CHAR(LAST_UPDATE_DATE, 'YYYY-MM-DD HH24:MI:SS') >= '2022-01-01'\r\n;",
+						"partitionOption": "None"
+					},
+					"sink": {
+						"type": "AzureSqlSink"
+					},
+					"enableStaging": false,
+					"validateDataConsistency": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "FROM_CURRENCY",
+									"type": "String"
+								},
+								"sink": {
+									"name": "FROM_CURRENCY",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "TO_CURRENCY",
+									"type": "String"
+								},
+								"sink": {
+									"name": "TO_CURRENCY",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "CONVERSION_DT",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "CONVERSION_DT",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								}
+							},
+							{
+								"source": {
+									"name": "CONVERSION_TYPE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "CONVERSION_TYPE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "CONVERSION_RATE",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "CONVERSION_RATE",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "STATUS_CODE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "STATUS_CODE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "CREATION_DT",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "CREATION_DT",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								}
+							},
+							{
+								"source": {
+									"name": "CREATED_BY",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "CREATED_BY",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "LAST_UPDATE_DT",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "LAST_UPDATE_DT",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								}
+							},
+							{
+								"source": {
+									"name": "LAST_UPDATED_BY",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "LAST_UPDATED_BY",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "LAST_UPDATE_LOGIN",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "LAST_UPDATE_LOGIN",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "CONTEXT",
+									"type": "String"
+								},
+								"sink": {
+									"name": "CONTEXT",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE1",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE1",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE2",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE2",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE3",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE3",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE4",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE4",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE5",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE5",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE6",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE6",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE7",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE7",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE8",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE8",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE9",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE9",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE10",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE10",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE11",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE11",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE12",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE12",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE13",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE13",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE14",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE14",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE15",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE15",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "RATE_SOURCE_CODE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "RATE_SOURCE_CODE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "OBJECT_VERSION_NUMBER",
+									"type": "String"
+								},
+								"sink": {
+									"name": "OBJECT_VERSION_NUMBER",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ENTERPRISE_ID",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ENTERPRISE_ID",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "INTEGRATION_ID",
+									"type": "String"
+								},
+								"sink": {
+									"name": "INTEGRATION_ID",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "DATASOURCE_NUM_ID",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "DATASOURCE_NUM_ID",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							}
+						],
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "SourceDataset_4vh",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DestinationDataset_4vh",
+						"type": "DatasetReference"
+					}
+				]
+			}
+		],
+		"folder": {
+			"name": "Raja Puranam - DEV/Anchor Packaging V1 - Dont Touch/Source to Stage/GL"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-01-25T14:20:25Z"
+	}
+}

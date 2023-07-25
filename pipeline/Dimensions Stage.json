@@ -1,0 +1,277 @@
+{
+	"name": "Dimensions Stage",
+	"properties": {
+		"activities": [
+			{
+				"name": "PL AAACCEL CT_SUPPLIER_D_STG",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "PL AAACCEL CT_GL_ACCOUNT_D_STG",
+						"dependencyConditions": [
+							"Succeeded",
+							"Failed"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL AAACCEL CT_SUPPLIER_D_STG",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "PL AAACCEL CT_CUSTOMER_D_STG",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "PL AAACCEL CT_SUPPLIER_D_STG",
+						"dependencyConditions": [
+							"Succeeded",
+							"Failed"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL AAACCEL CT_CUSTOMER_D_STG",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "PL AAACCEL CT_BANK_ACCOUNT_D_STG",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "PL AAACCEL CT_CUSTOMER_D_STG",
+						"dependencyConditions": [
+							"Succeeded",
+							"Failed"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL AAACCEL CT_BANK_ACCOUNT_D_STG",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "PL AAACCEL CT_BUSINESS_UNIT_D_STG",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "PL AAACCEL CT_CURRENCY_D_STG",
+						"dependencyConditions": [
+							"Succeeded",
+							"Failed"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL AAACCEL CT_BUSINESS_UNIT_D_STG",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "PL AAACCEL CT_BUSN_LOC_D_STG",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "PL AAACCEL CT_PRODUCT_D_STG",
+						"dependencyConditions": [
+							"Succeeded",
+							"Failed"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL AAACCEL CT_BUSN_LOC_D_STG",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "PL AAACCEL CT_CURRENCY_D_STG",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "PL AAACCEL CT_LEGAL_ENTITY_D_STG",
+						"dependencyConditions": [
+							"Succeeded",
+							"Failed"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL AAACCEL CT_CURRENCY_D_STG",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "PL AAACCEL CT_ORG_D_STG",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "PL AAACCEL CT_BUSN_LOC_D_STG",
+						"dependencyConditions": [
+							"Succeeded",
+							"Failed"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL AAACCEL CT_ORG_D_STG",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "PL AAACCEL CT_PRODUCT_D_STG",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "PL AAACCEL CT_BANK_ACCOUNT_D_STG",
+						"dependencyConditions": [
+							"Succeeded",
+							"Failed"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL AAACCEL CT_PRODUCT_D_STG",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "PL AAACCEL CT_GL_ACCOUNT_D_STG",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL AAACCEL CT_GL_ACCOUNT_D_STG",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "PL AAACCEL CT_GL_DAILY_RATES_D_STG",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "PL AAACCEL CT_BUSINESS_UNIT_D_STG",
+						"dependencyConditions": [
+							"Succeeded",
+							"Failed"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL AAACCEL CT_GL_DAILY_RATES_D_STG",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "PL AAACCEL CT_GL_LEDGERS_D_STG",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "PL AAACCEL CT_GL_DAILY_RATES_D_STG",
+						"dependencyConditions": [
+							"Succeeded",
+							"Failed"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL AAACCEL CT_GL_LEDGERS_D_STG",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "PL AAACCEL CT_GL_PERIODS_D_STG",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "PL AAACCEL CT_GL_LEDGERS_D_STG",
+						"dependencyConditions": [
+							"Succeeded",
+							"Failed"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL AAACCEL CT_GL_PERIODS_D_STG",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "PL AAACCEL CT_LEGAL_ENTITY_D_STG",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "PL AAACCEL CT_ORG_D_STG",
+						"dependencyConditions": [
+							"Succeeded",
+							"Failed"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL AAACCEL CT_LEGAL_ENTITY_D_STG",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			}
+		],
+		"folder": {
+			"name": "Raja Puranam - DEV/Anchor Packaging V1 - Dont Touch/Source to Stage"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-01-25T15:03:12Z"
+	}
+}

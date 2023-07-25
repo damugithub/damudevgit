@@ -1,0 +1,388 @@
+{
+	"name": "PL AAACCEL CT_BANK_ACCOUNT_D_STG",
+	"properties": {
+		"description": "Pipeline to extract data into CT_BANK_ACCOUNT_D_STG table in AAACCEL  schema.",
+		"activities": [
+			{
+				"name": "CT_BANK_ACCOUNT_D_STG",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [
+					{
+						"name": "Source",
+						"value": "."
+					},
+					{
+						"name": "Destination",
+						"value": "AAAccel.CT_BANK_ACCOUNT_D_STG"
+					}
+				],
+				"typeProperties": {
+					"source": {
+						"type": "OracleSource",
+						"oracleReaderQuery": "/*CT_BANK_ACCOUNT_D_STG*/\r\nSELECT\r\n\tcebb.bank_name,\r\n\tcebb.bank_number,\r\n\tcebb.bank_branch_name,\r\n\tcebb.branch_number as bank_branch_number,\r\n\tcebb.bank_branch_type, \r\n\tceba.bank_account_num,\r\n\tceba.bank_account_name,\r\n\tceba.account_classification,\r\n\tcebb.address_line1,    \r\n\tcebb.address_line2,\r\n\tcebb.address_line3,\r\n\tcebb.address_line4,\r\n\tcebb.city,                                               \r\n\tcebb.state,                                             \r\n\tcebb.zip as zip_code,\r\n\tcebb.country,       \r\n\tceba.asset_code_combination_id,      \r\n\tceba.account_owner_org_id AS LEGAL_ENTITY_ID ,\r\n\t'NULL' AS ATTRIBUTE1,\r\n\t'NULL' AS ATTRIBUTE2,\r\n\t'NULL' AS ATTRIBUTE3,\r\n\t'NULL' AS ATTRIBUTE4,\r\n\t'NULL' AS ATTRIBUTE5,\r\n\tceba.creation_date,\r\n\tceba.last_update_date,\r\n\tceba.created_by,\r\n\tceba.last_updated_by,\r\n\tceba.BANK_ACCOUNT_ID AS INTEGRATION_ID,\r\n\t1000 AS DATASOURCE_NUM_ID\r\nFROM \r\n\tce_bank_branches_v        cebb,\r\n\tce_bank_accounts          ceba          \r\nWHERE     1 = 1\r\n\tAND cebb.branch_party_id = ceba.bank_branch_id\r\n\t--AND TO_CHAR(ceba.last_update_date, 'YYYY-MM-DD HH24:MI:SS') >= '2022-01-01'\r\n;",
+						"partitionOption": "None"
+					},
+					"sink": {
+						"type": "AzureSqlSink"
+					},
+					"enableStaging": false,
+					"validateDataConsistency": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "BANK_NAME",
+									"type": "String"
+								},
+								"sink": {
+									"name": "BANK_NAME",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "BANK_BRANCH_NAME",
+									"type": "String"
+								},
+								"sink": {
+									"name": "BANK_BRANCH_NAME",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "BANK_NUMBER",
+									"type": "String"
+								},
+								"sink": {
+									"name": "BANK_NUMBER",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "BANK_BRANCH_NUMBER",
+									"type": "String"
+								},
+								"sink": {
+									"name": "BANK_BRANCH_NUMBER",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "BANK_BRANCH_TYPE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "BANK_BRANCH_TYPE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "BANK_ACCOUNT_NUM",
+									"type": "String"
+								},
+								"sink": {
+									"name": "BANK_ACCOUNT_NUM",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "BANK_ACCOUNT_NAME",
+									"type": "String"
+								},
+								"sink": {
+									"name": "BANK_ACCOUNT_NAME",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ACCOUNT_CLASSIFICATION",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ACCOUNT_CLASSIFICATION",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ADDRESS_LINE1",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ADDRESS_LINE1",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ADDRESS_LINE2",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ADDRESS_LINE2",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ADDRESS_LINE3",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ADDRESS_LINE3",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ADDRESS_LINE4",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ADDRESS_LINE4",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "CITY",
+									"type": "String"
+								},
+								"sink": {
+									"name": "CITY",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "STATE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "STATE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ZIP_CODE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ZIP_CODE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "COUNTRY",
+									"type": "String"
+								},
+								"sink": {
+									"name": "COUNTRY",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ASSET_CODE_COMBINATION_ID",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "ASSET_CODE_COMBINATION_ID",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "LEGAL_ENTITY_ID",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "LEGAL_ENTITY_ID",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE1",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE1",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE2",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE2",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE3",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE3",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE4",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE4",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE5",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE5",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "CREATION_DATE",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "CREATION_DATE",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								}
+							},
+							{
+								"source": {
+									"name": "LAST_UPDATE_DATE",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "LAST_UPDATE_DATE",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								}
+							},
+							{
+								"source": {
+									"name": "CREATED_BY",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "CREATED_BY",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "LAST_UPDATED_BY",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "LAST_UPDATED_BY",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "INTEGRATION_ID",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "INTEGRATION_ID",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "DATASOURCE_NUM_ID",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "DATASOURCE_NUM_ID",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							}
+						],
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "SourceDataset_yje",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DestinationDataset_yje",
+						"type": "DatasetReference"
+					}
+				]
+			}
+		],
+		"folder": {
+			"name": "Raja Puranam - DEV/Anchor Packaging V1 - Dont Touch/Source to Stage/CD"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-01-25T14:19:36Z"
+	}
+}

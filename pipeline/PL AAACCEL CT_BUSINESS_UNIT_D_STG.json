@@ -1,0 +1,278 @@
+{
+	"name": "PL AAACCEL CT_BUSINESS_UNIT_D_STG",
+	"properties": {
+		"description": "Pipeline to extract data into CT_BUSINESS_UNIT_D_STG table in AAACCEL schema.",
+		"activities": [
+			{
+				"name": "CT_BUSINESS_UNIT_D_STG",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [
+					{
+						"name": "Source",
+						"value": "."
+					},
+					{
+						"name": "Destination",
+						"value": "AAAccel.CT_BUSINESS_UNIT_D_STG"
+					}
+				],
+				"typeProperties": {
+					"source": {
+						"type": "OracleSource",
+						"oracleReaderQuery": "/*CT_BUSINESS_UNIT_D_STG*/\r\nSELECT\r\n     TO_CHAR(ORGANIZATIONUNITPEO.ORGANIZATION_ID) AS BU_ID,\r\n     TO_CHAR(ORGANIZATIONUNITPEO.ORGANIZATION_ID) AS BU_NUM,\r\n     ORGANIZATIONUNITTRANSLATIONPEO.NAME        AS BU_NAME,\r\n     ORG_INFO.ORG_INFORMATION_ID                AS ORG_INFORMATION_ID,\r\n     to_char(LEDGER.NAME)                              AS LEDGER_NAME,\r\n     TO_CHAR(ORGANIZATIONUNITPEO.DATE_FROM,'DD-MON-YYYY') AS EFFECTIVE_START_DT,\r\n     TO_CHAR(ORGANIZATIONUNITPEO.DATE_TO,'DD-MON-YYYY') AS EFFECTIVE_END_DT,\r\n    -- TO_CHAR(ORGANIZATIONUNITPEO.EFFECTIVE_START_DATE,'MM-DD-YYYY HH24:mi:ss')   AS EFFECTIVE_START_DT,\r\n    -- TO_CHAR(ORGANIZATIONUNITPEO.EFFECTIVE_END_DATE,'MM-DD-YYYY HH24:mi:ss')    AS EFFECTIVE_END_DT,\r\n     ORGANIZATIONUNITTRANSLATIONPEO.LANGUAGE    AS LANGUAGE,\r\n\tORGANIZATIONUNITPEO.ATTRIBUTE1 AS ATTRIBUTE1,\r\n\tORGANIZATIONUNITPEO.ATTRIBUTE2 AS ATTRIBUTE2,\r\n\tORGANIZATIONUNITPEO.ATTRIBUTE3 AS ATTRIBUTE3,\r\n\tORGANIZATIONUNITPEO.ATTRIBUTE4 AS ATTRIBUTE4,\r\n\tORGANIZATIONUNITPEO.ATTRIBUTE5 AS ATTRIBUTE5,\r\n     TO_CHAR(ORGANIZATIONUNITPEO.CREATION_DATE,'MM-DD-YYYY HH24:mi:ss') AS CREATION_DT,\r\n     TO_CHAR(ORGANIZATIONUNITPEO.LAST_UPDATE_DATE,'MM-DD-YYYY HH24:mi:ss') AS LAST_UPDATE_DT,\r\n     ORGANIZATIONUNITPEO.CREATED_BY,\r\n     ORGANIZATIONUNITPEO.LAST_UPDATED_BY,\r\n     TO_CHAR(ORGANIZATIONUNITPEO.ORGANIZATION_ID) AS INTEGRATION_ID,\r\n     1000 AS DATASOURCE_NUM_ID\r\n FROM\r\n     HR_ALL_ORGANIZATION_UNITS ORGANIZATIONUNITPEO,\r\n     HR_ALL_ORGANIZATION_UNITS_TL ORGANIZATIONUNITTRANSLATIONPEO,\r\n     HR_ORGANIZATION_INFORMATION ORG_INFO,\r\n     GL_LEDGERS LEDGER\r\nWHERE 1=1\r\nAND ORGANIZATIONUNITPEO.ORGANIZATION_ID = ORG_INFO.ORGANIZATION_ID\r\n  AND ( 'KR_BUSINESS_PLACE_REGISTRATION' ) = ORG_INFO.ORG_INFORMATION_CONTEXT\r\n AND ORG_INFO.ORG_INFORMATION3 = TO_CHAR(LEDGER.LEDGER_ID(+))\r\n  AND ORGANIZATIONUNITPEO.ORGANIZATION_ID = ORGANIZATIONUNITTRANSLATIONPEO.ORGANIZATION_ID\r\n    AND ( USERENV('LANG') ) = ORGANIZATIONUNITTRANSLATIONPEO.LANGUAGE AND\r\n   ( SYSDATE BETWEEN ORGANIZATIONUNITPEO.DATE_FROM AND \r\n\tNVL(ORGANIZATIONUNITPEO.DATE_TO,SYSDATE) );",
+						"partitionOption": "None"
+					},
+					"sink": {
+						"type": "AzureSqlSink"
+					},
+					"enableStaging": false,
+					"validateDataConsistency": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "BU_ID",
+									"type": "String"
+								},
+								"sink": {
+									"name": "BU_ID",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "BU_NUM",
+									"type": "String"
+								},
+								"sink": {
+									"name": "BU_NUM",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "BU_NAME",
+									"type": "String"
+								},
+								"sink": {
+									"name": "BU_NAME",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ORG_INFORMATION_ID",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "ORG_INFORMATION_ID",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "LEDGER_NAME",
+									"type": "String"
+								},
+								"sink": {
+									"name": "LEDGER_NAME",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "EFFECTIVE_START_DT",
+									"type": "String"
+								},
+								"sink": {
+									"name": "EFFECTIVE_START_DT",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "EFFECTIVE_END_DT",
+									"type": "String"
+								},
+								"sink": {
+									"name": "EFFECTIVE_END_DT",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "LANGUAGE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "LANGUAGE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE1",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE1",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE2",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE2",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE3",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE3",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE4",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE4",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE5",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE5",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "CREATION_DT",
+									"type": "String"
+								},
+								"sink": {
+									"name": "CREATION_DT",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "LAST_UPDATE_DT",
+									"type": "String"
+								},
+								"sink": {
+									"name": "LAST_UPDATE_DT",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "CREATED_BY",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "CREATED_BY",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "LAST_UPDATED_BY",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "LAST_UPDATED_BY",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "INTEGRATION_ID",
+									"type": "String"
+								},
+								"sink": {
+									"name": "INTEGRATION_ID",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "DATASOURCE_NUM_ID",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "DATASOURCE_NUM_ID",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							}
+						],
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "SourceDataset_vtn",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DestinationDataset_vtn",
+						"type": "DatasetReference"
+					}
+				]
+			}
+		],
+		"folder": {
+			"name": "Raja Puranam - DEV/Anchor Packaging V1 - Dont Touch/Source to Stage/CD"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-01-25T14:19:42Z"
+	}
+}

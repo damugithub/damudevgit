@@ -1,0 +1,399 @@
+{
+	"name": "PL AAACCEL CT_GL_PERIODS_D_STG",
+	"properties": {
+		"description": "Pipeline to extract data into CT_GL_PERIODS_D_STG table in AAACCEL schema.",
+		"activities": [
+			{
+				"name": "CT_GL_PERIODS_D_STG",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [
+					{
+						"name": "Source",
+						"value": "."
+					},
+					{
+						"name": "Destination",
+						"value": "AAAccel.CT_GL_PERIODS_D_STG"
+					}
+				],
+				"typeProperties": {
+					"source": {
+						"type": "OracleSource",
+						"oracleReaderQuery": "/*CT_GL_PERIODS_D_STG*/\r\nSELECT\r\n    TO_NUMBER(PERIOD_YEAR||LPAD(TO_CHAR(PERIOD_NUM),2,'0')) AS PERIOD_ID,\r\n\tPERIOD_NAME,\r\n    PERIOD_SET_NAME,\r\n    START_DATE START_DT,\r\n    END_DATE END_DT ,\r\n    YEAR_START_DATE YEAR_START_DT,\r\n    QUARTER_START_DATE QUARTER_START_DT,\r\n    PERIOD_TYPE,\r\n    PERIOD_YEAR,\r\n    PERIOD_NUM ,\r\n    QUARTER_NUM,\r\n    'Q'||QUARTER_NUM||'-'||PERIOD_YEAR AS QUARTER_NAME,\r\n    ENTERED_PERIOD_NAME,\r\n    ADJUSTMENT_PERIOD_FLAG,\r\n    DESCRIPTION,\r\n    ATTRIBUTE1,\r\n    ATTRIBUTE2,\r\n    ATTRIBUTE3,\r\n    ATTRIBUTE4,\r\n    ATTRIBUTE5,\r\n    ATTRIBUTE6,\r\n    ATTRIBUTE7,\r\n    ATTRIBUTE8,\r\n    CREATION_DATE CREATION_DT,\r\n    CREATED_BY,\r\n    LAST_UPDATE_DATE LAST_UPDATE_DT,\r\n    LAST_UPDATED_BY,\r\n    LAST_UPDATE_LOGIN,\r\n    PERIOD_NAME||'~'||PERIOD_SET_NAME AS INTEGRATION_ID,\r\n    1000 DATASOURCE_NUM_ID\r\nFROM\r\n    GL_PERIODS\r\nWHERE 1=1\r\n--AND TO_CHAR(GL_PERIODS.LAST_UPDATE_DATE, 'YYYY-MM-DD HH24:MI:SS') >= '2022-01-01'\r\n;",
+						"partitionOption": "None"
+					},
+					"sink": {
+						"type": "AzureSqlSink"
+					},
+					"enableStaging": false,
+					"validateDataConsistency": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "PERIOD_ID",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "PERIOD_ID",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "PERIOD_NAME",
+									"type": "String"
+								},
+								"sink": {
+									"name": "PERIOD_NAME",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "PERIOD_SET_NAME",
+									"type": "String"
+								},
+								"sink": {
+									"name": "PERIOD_SET_NAME",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "START_DT",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "START_DT",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								}
+							},
+							{
+								"source": {
+									"name": "END_DT",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "END_DT",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								}
+							},
+							{
+								"source": {
+									"name": "YEAR_START_DT",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "YEAR_START_DT",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								}
+							},
+							{
+								"source": {
+									"name": "QUARTER_START_DT",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "QUARTER_START_DT",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								}
+							},
+							{
+								"source": {
+									"name": "PERIOD_TYPE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "PERIOD_TYPE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "PERIOD_YEAR",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "PERIOD_YEAR",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "PERIOD_NUM",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "PERIOD_NUM",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "QUARTER_NUM",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "QUARTER_NUM",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "QUARTER_NAME",
+									"type": "String"
+								},
+								"sink": {
+									"name": "QUARTER_NAME",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ENTERED_PERIOD_NAME",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ENTERED_PERIOD_NAME",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ADJUSTMENT_PERIOD_FLAG",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ADJUSTMENT_PERIOD_FLAG",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "DESCRIPTION",
+									"type": "String"
+								},
+								"sink": {
+									"name": "DESCRIPTION",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE1",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE1",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE2",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE2",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE3",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE3",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE4",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE4",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE5",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE5",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE6",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE6",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE7",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE7",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE8",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE8",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "CREATION_DT",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "CREATION_DT",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								}
+							},
+							{
+								"source": {
+									"name": "CREATED_BY",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "CREATED_BY",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "LAST_UPDATE_DT",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "LAST_UPDATE_DT",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								}
+							},
+							{
+								"source": {
+									"name": "LAST_UPDATED_BY",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "LAST_UPDATED_BY",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "LAST_UPDATE_LOGIN",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "LAST_UPDATE_LOGIN",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "INTEGRATION_ID",
+									"type": "String"
+								},
+								"sink": {
+									"name": "INTEGRATION_ID",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "DATASOURCE_NUM_ID",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "DATASOURCE_NUM_ID",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							}
+						],
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "SourceDataset_uls",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DestinationDataset_uls",
+						"type": "DatasetReference"
+					}
+				]
+			}
+		],
+		"folder": {
+			"name": "Raja Puranam - DEV/Anchor Packaging V1 - Dont Touch/Source to Stage/GL"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-01-25T14:20:47Z"
+	}
+}

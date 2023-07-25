@@ -1,0 +1,553 @@
+{
+	"name": "PL AAACCEL CT_ORG_D_STG",
+	"properties": {
+		"description": "Pipeline to extract data into CT_ORG_D_STG table in AAACCEL schema.",
+		"activities": [
+			{
+				"name": "CT_ORG_D_STG",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [
+					{
+						"name": "Source",
+						"value": "."
+					},
+					{
+						"name": "Destination",
+						"value": "AAAccel.CT_ORG_D_STG"
+					}
+				],
+				"typeProperties": {
+					"source": {
+						"type": "OracleSource",
+						"oracleReaderQuery": "/*CT_ORG_D_STG*/\r\nSELECT COALESCE (HU.ORGANIZATION_ID,0)  AS ORG_ID,\r\n  HU.NAME                  AS ORG_NAME,\r\n  NULL                     AS ORG_UNIT_CLASSIFICATION_ID,\r\n  HU.ORGANIZATION_ID       AS ORG_NUM,\r\n  HRL.DESCRIPTION          AS ORG_DESC,\r\n  NULL                     AS CLASSIFICATION_CODE,\r\n  NULL                     AS CLASSIFICATION_NAME,\r\n  HRL.ADDRESS_LINE_1       AS ST_ADDRESS1,\r\n  HRL.ADDRESS_LINE_2       AS ST_ADDRESS2 ,\r\n  HRL.TOWN_OR_CITY         AS CITY,\r\n  '-'                      AS COUNTY,\r\n  HRL.POSTAL_CODE          AS POSTAL_CODE,\r\n  HRL.REGION_2             AS STATE_CODE,\r\n  S.MEANING                AS STATE_NAME,\r\n  HRL.REGION_1             AS STATE_REGION,\r\n  HRL.COUNTRY              AS COUNTRY_CODE,\r\n  FND.TERRITORY_SHORT_NAME AS COUNTRY_NAME,\r\n  '-'                      AS COUNTRY_REGION,\r\n  '-'                      AS WEB_ADDRESS,\r\n  HRL.TELEPHONE_NUMBER_1   AS PHONE_NUM,\r\n  '-'                      AS EMAIL_ADDRESS,\r\n  '-'                      AS DIVN_FLAG,\r\n  '-'                      AS BU_FLAG,\r\n  (\r\n  CASE\r\n    WHEN HI.ORG_INFORMATION1='OPERATING_UNIT'\r\n    THEN 'Y'\r\n    ELSE 'N'\r\n  END) OPERATING_UNIT_FLAG,\r\n  (\r\n  CASE\r\n    WHEN HI.ORG_INFORMATION1='INV'\r\n    THEN 'Y'\r\n    ELSE 'N'\r\n  END) INV_ORG_FLAG,\r\n  (\r\n  CASE\r\n    WHEN HI.ORG_INFORMATION1 = 'HR_ORG'\r\n    THEN 'Y'\r\n    ELSE 'N'\r\n  END) HR_ORG_FLAG,\r\n  (\r\n  CASE\r\n    WHEN HI.ORG_INFORMATION1 = 'PA_PROJECT_ORG'\r\n    THEN 'Y'\r\n    ELSE 'N'\r\n  END) PROJECT_ORG_FLAG,\r\n  '-'      AS LEGAL_ENTITY         ,\r\n  '-'      AS STATUS               ,\r\n  '-'      AS COST_CENTER_CODE     ,\r\n  TO_TIMESTAMP(HU.DATE_FROM) AS EFFECTIVE_START_DT            ,\r\n  TO_TIMESTAMP(HU.DATE_TO )  AS EFFECTIVE_END_DT              ,\r\n  CASE WHEN  SYSDATE BETWEEN HU.DATE_FROM and NVL(HU.DATE_TO,SYSDATE) THEN 'Y' else 'N' END AS CURRENT_FLAG,\r\n  HU.ATTRIBUTE1     AS ATTRIBUTE1  ,\r\n  HU.ATTRIBUTE2     AS ATTRIBUTE2  ,\r\n  HU.ATTRIBUTE3     AS ATTRIBUTE3  ,\r\n  HU.ATTRIBUTE4     AS ATTRIBUTE4  ,\r\n  HU.ATTRIBUTE5     AS ATTRIBUTE5  ,\r\n  TO_TIMESTAMP(HI.LAST_UPDATE_DATE)         AS LAST_UPDATE_DT,\r\n  TO_TIMESTAMP(HI.CREATION_DATE)            AS CREATION_DT,\r\n  FU_CREATION.USER_NAME       AS CREATED_BY ,\r\n  FU_LASTUPDATE.USER_NAME     AS LAST_UPDATED_BY,\r\n  HI.ORG_INFORMATION1||'~'||TO_CHAR(HU.ORGANIZATION_ID) AS INTEGRATION_ID,\r\n  1000                        AS DATASOURCE_NUM_ID\r\nFROM \r\n  HR_ALL_ORGANIZATION_UNITS HU,\r\n  HR_ORGANIZATION_INFORMATION HI,\r\n  HR_LOCATIONS_ALL HRL,\r\n  MTL_PARAMETERS ORG_PARM,\r\n  FND_TERRITORIES_TL FND,\r\n  FND_USER FU_CREATION,\r\n  FND_USER FU_LASTUPDATE,\r\n  FND_LOOKUP_VALUES S\r\nWHERE HI.ORG_INFORMATION_CONTEXT = 'CLASS'\r\nAND HI.ORG_INFORMATION1          IN ('INV','HR_ORG','PA_PROJECT_ORG','OPERATING_UNIT' )\r\nAND HI.ORG_INFORMATION2           = 'Y'\r\nAND HI.ORGANIZATION_ID            = HU.ORGANIZATION_ID\r\nAND HU.LOCATION_ID                = HRL.LOCATION_ID (+)\r\nAND HU.ORGANIZATION_ID            = ORG_PARM.ORGANIZATION_ID (+)\r\nAND FND.TERRITORY_CODE            =HRL.COUNTRY\r\nAND FU_CREATION.USER_ID           = HI.CREATED_BY\r\nAND FU_LASTUPDATE.USER_ID         = HI.LAST_UPDATED_BY\r\nAND S.LOOKUP_TYPE (+)                = 'STATE'\r\nAND S.LOOKUP_CODE(+)                 = HRL.REGION_2\r\nAND (START_DATE_ACTIVE            IN\r\n  (SELECT MAX(START_DATE_ACTIVE)\r\n  FROM FND_LOOKUP_VALUES FLV\r\n  WHERE FLV.LOOKUP_CODE= S.LOOKUP_CODE\r\n  AND FLV.LOOKUP_TYPE  = S.LOOKUP_TYPE\r\n  GROUP BY LOOKUP_CODE,\r\n    LOOKUP_TYPE\r\n  ) OR START_DATE_ACTIVE IS NULL)\r\n--AND TO_CHAR(HI.LAST_UPDATE_DATE, 'YYYY-MM-DD HH24:MI:SS') >= '2022-01-01'",
+						"partitionOption": "None"
+					},
+					"sink": {
+						"type": "AzureSqlSink"
+					},
+					"enableStaging": false,
+					"validateDataConsistency": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "ORG_ID",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "ORG_ID",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "ORG_NAME",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ORG_NAME",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ORG_UNIT_CLASSIFICATION_ID",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ORG_UNIT_CLASSIFICATION_ID",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ORG_NUM",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "ORG_NUM",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "ORG_DESC",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ORG_DESC",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "CLASSIFICATION_CODE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "CLASSIFICATION_CODE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "CLASSIFICATION_NAME",
+									"type": "String"
+								},
+								"sink": {
+									"name": "CLASSIFICATION_NAME",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ST_ADDRESS1",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ST_ADDRESS1",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ST_ADDRESS2",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ST_ADDRESS2",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "CITY",
+									"type": "String"
+								},
+								"sink": {
+									"name": "CITY",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "COUNTY",
+									"type": "String"
+								},
+								"sink": {
+									"name": "COUNTY",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "POSTAL_CODE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "POSTAL_CODE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "STATE_CODE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "STATE_CODE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "STATE_NAME",
+									"type": "String"
+								},
+								"sink": {
+									"name": "STATE_NAME",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "STATE_REGION",
+									"type": "String"
+								},
+								"sink": {
+									"name": "STATE_REGION",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "COUNTRY_CODE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "COUNTRY_CODE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "COUNTRY_NAME",
+									"type": "String"
+								},
+								"sink": {
+									"name": "COUNTRY_NAME",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "COUNTRY_REGION",
+									"type": "String"
+								},
+								"sink": {
+									"name": "COUNTRY_REGION",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "WEB_ADDRESS",
+									"type": "String"
+								},
+								"sink": {
+									"name": "WEB_ADDRESS",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "PHONE_NUM",
+									"type": "String"
+								},
+								"sink": {
+									"name": "PHONE_NUM",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "EMAIL_ADDRESS",
+									"type": "String"
+								},
+								"sink": {
+									"name": "EMAIL_ADDRESS",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "DIVN_FLAG",
+									"type": "String"
+								},
+								"sink": {
+									"name": "DIVN_FLAG",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "BU_FLAG",
+									"type": "String"
+								},
+								"sink": {
+									"name": "BU_FLAG",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "OPERATING_UNIT_FLAG",
+									"type": "String"
+								},
+								"sink": {
+									"name": "OPERATING_UNIT_FLAG",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "INV_ORG_FLAG",
+									"type": "String"
+								},
+								"sink": {
+									"name": "INV_ORG_FLAG",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "HR_ORG_FLAG",
+									"type": "String"
+								},
+								"sink": {
+									"name": "HR_ORG_FLAG",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "PROJECT_ORG_FLAG",
+									"type": "String"
+								},
+								"sink": {
+									"name": "PROJECT_ORG_FLAG",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "LEGAL_ENTITY",
+									"type": "String"
+								},
+								"sink": {
+									"name": "LEGAL_ENTITY",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "STATUS",
+									"type": "String"
+								},
+								"sink": {
+									"name": "STATUS",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "COST_CENTER_CODE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "COST_CENTER_CODE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "EFFECTIVE_START_DT",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "EFFECTIVE_START_DT",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								}
+							},
+							{
+								"source": {
+									"name": "EFFECTIVE_END_DT",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "EFFECTIVE_END_DT",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								}
+							},
+							{
+								"source": {
+									"name": "CURRENT_FLAG",
+									"type": "String"
+								},
+								"sink": {
+									"name": "CURRENT_FLAG",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE1",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE1",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE2",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE2",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE3",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE3",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE4",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE4",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE5",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE5",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "CREATION_DT",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "CREATION_DT",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								}
+							},
+							{
+								"source": {
+									"name": "LAST_UPDATE_DT",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "LAST_UPDATE_DT",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								}
+							},
+							{
+								"source": {
+									"name": "CREATED_BY",
+									"type": "String"
+								},
+								"sink": {
+									"name": "CREATED_BY",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "LAST_UPDATED_BY",
+									"type": "String"
+								},
+								"sink": {
+									"name": "LAST_UPDATED_BY",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "INTEGRATION_ID",
+									"type": "String"
+								},
+								"sink": {
+									"name": "INTEGRATION_ID",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "DATASOURCE_NUM_ID",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "DATASOURCE_NUM_ID",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							}
+						],
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "SourceDataset_47u",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DestinationDataset_47u",
+						"type": "DatasetReference"
+					}
+				]
+			}
+		],
+		"folder": {
+			"name": "Raja Puranam - DEV/Anchor Packaging V1 - Dont Touch/Source to Stage/CD"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-01-25T14:21:11Z"
+	}
+}

@@ -1,0 +1,608 @@
+{
+	"name": "PL AAACCEL CT_SUPPLIER_D_STG",
+	"properties": {
+		"description": "Pipeline to extract data into CT_SUPPLIER_D_STG table in AAACCEL schema.",
+		"activities": [
+			{
+				"name": "CT_SUPPLIER_D_STG",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [
+					{
+						"name": "Source",
+						"value": "."
+					},
+					{
+						"name": "Destination",
+						"value": "AAAccel.CT_SUPPLIER_D_STG"
+					}
+				],
+				"typeProperties": {
+					"source": {
+						"type": "OracleSource",
+						"oracleReaderQuery": "/*CT_SUPPLIER_D_STG*/\r\nSELECT\r\n\t-- NULL AS  SUPPLIER_ID,\r\n\tSITE.VENDOR_ID AS SUPPLIER_ID,\r\n\tSITE.VENDOR_SITE_ID                         AS SUPPLIER_SITE_NUM,                       \r\n\tSUP.SEGMENT1                                AS SUPPLIER_NUM,            \r\n\tSUP.VENDOR_NAME                                 AS SUPPLIER_NAME,                       \r\n\tSITE.VENDOR_SITE_CODE               AS SUPPLIER_SITE_CODE,      \r\n\tPARTY.PARTY_ID                              AS SUP_PARTY_ID,\r\n\tPARTY.PARTY_NUMBER                              AS PARTY_NUM,\r\n\tPARTY.PARTY_NAME                            AS PARTY_NAME,\r\n\tNVL(LOCATION.ADDRESS1,SITE.address_line1)                  AS ADDRESS1,    \r\n\tNVL(LOCATION.ADDRESS2 ,SITE.address_line2)                    AS ADDRESS2,    \r\n\tNVL(LOCATION.ADDRESS3,SITE.address_line3)                     AS ADDRESS3,    \r\n\tNVL(LOCATION.ADDRESS4,SITE.address_line4)                     AS ADDRESS4,    \r\n\tNVL(LOCATION.POSTAL_CODE ,SITE.zip)               AS POSTAL_CODE,     \r\n\tNVL(LOCATION.CITY ,SITE.CITY)                         AS CITY,\r\n\tNVL(LOCATION.STATE ,SITE.STATE)                       AS STATE,\r\n\tNVL(LOCATION.COUNTRY ,SITE.COUNTRY)                   AS COUNTRY,     \r\n\tSITE.EMAIL_ADDRESS                   AS EMAIL_ADDRESS,   \r\n\tTO_CHAR(SITE.INACTIVE_DATE,'DD-MON-YY')      AS SITE_INACTIVE_DT,                      \r\n\tPARTYSITE.PARTY_SITE_NUMBER                       AS PARTY_SITE_NUM,      \r\n\tPARTYSITE.PARTY_SITE_NAME                       AS PARTY_SITE_NAME,           \r\n\tSITE.PAY_GROUP_LOOKUP_CODE                   AS PAY_GROUP_LOOKUP_CODE,           \r\n\tSUP.VENDOR_TYPE_LOOKUP_CODE                   AS VENDOR_TYPE_LOOKUP_CODE,         \r\n\tSUP.SET_OF_BOOKS_ID                           AS SET_OF_BOOKS_ID,             \r\n\tSUP.ONE_TIME_FLAG                             AS ONE_TIME_FLAG,           \r\n\tNULL AS REVIEW_TYPE,                      \r\n\tSUP.STANDARD_INDUSTRY_CLASS                   AS STANDARD_INDUSTRY_CLASS,             \r\n\tSUP.ORGANIZATION_TYPE_LOOKUP_CODE AS ORGANIZATION_TYPE_LOOKUP_CODE,                        \r\n\tSUP.ENABLED_FLAG AS ENABLED_FLAG,                      \r\n\tNULL STATE_REPORTABLE_FLAG,                        \r\n\tNULL FEDERAL_REPORTABLE_FLAG,                       \r\n\tSITE.INVOICE_CURRENCY_CODE,                        \r\n\tSITE.PAYMENT_CURRENCY_CODE,                        \r\n\tSITE.VAT_REGISTRATION_NUM AS VAT_NUM,                      \r\n\t-- (select NAME from ap_terms_tl where term_id=site.terms_id) AS PAYMENT_TERMS,                       \r\n\tAPT.NAME AS PAYMENT_TERMS,\r\n\tNULL AS ATTRIBUTE1,                     \r\n\tNULL AS ATTRIBUTE2,                     \r\n\tNULL AS ATTRIBUTE3,                     \r\n\tNULL AS ATTRIBUTE4,                     \r\n\tNULL AS ATTRIBUTE5,                     \r\n\tSITE.CREATION_DATE AS CREATION_DT,                     \r\n\tSITE.LAST_UPDATE_DATE AS LAST_UPDATE_DT,                      \r\n\tSITE.CREATED_BY,                        \r\n\tSITE.LAST_UPDATED_BY,                       \r\n\tSITE.VENDOR_SITE_ID       AS INTEGRATION_ID,                        \r\n\t1000 AS DATASOURCE_NUM_ID,                     \r\n\tNULL AS ACTIVE_FLAG ,                                               \r\n\tNULL AS DELETE_FLAG  ,                                              \r\n\tNULL AS W_INSERT_DT ,                                                       \r\n\tNULL AS W_UPDATE_DT                             \r\n\r\nFrom\r\n\tAP_SUPPLIER_SITES_ALL SITE,                      \r\n\tAP_SUPPLIERS SUP,                        \r\n\tHZ_PARTIES    PARTY,                     \r\n\tHZ_PARTY_SITES PARTYSITE,                        \r\n\tHZ_LOCATIONS LOCATION            ,\r\n\tap_terms_tl APT          \r\nwhere 1=1\r\n\tAND APT.term_id=site.terms_id\r\n\tAND SITE.VENDOR_ID     = SUP.VENDOR_ID                      \r\n\tAND SUP.PARTY_ID          = PARTY.PARTY_ID                          \r\n\tAND SITE.PARTY_SITE_ID   = PARTYSITE.PARTY_SITE_ID(+)                       \r\n\tAND SITE.LOCATION_ID     = LOCATION.LOCATION_ID(+)                      \r\n\t--AND TO_CHAR(SITE.LAST_UPDATE_DATE, 'YYYY-MM-DD HH24:MI:SS') >= '2022-01-01'\r\n;",
+						"partitionOption": "None"
+					},
+					"sink": {
+						"type": "AzureSqlSink"
+					},
+					"enableStaging": false,
+					"validateDataConsistency": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "SUPPLIER_ID",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "SUPPLIER_ID",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "SUPPLIER_SITE_NUM",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "SUPPLIER_SITE_NUM",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "SUPPLIER_NUM",
+									"type": "String"
+								},
+								"sink": {
+									"name": "SUPPLIER_NUM",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "SUPPLIER_NAME",
+									"type": "String"
+								},
+								"sink": {
+									"name": "SUPPLIER_NAME",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "SUPPLIER_SITE_CODE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "SUPPLIER_SITE_CODE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "SUP_PARTY_ID",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "SUP_PARTY_ID",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "PARTY_NUM",
+									"type": "String"
+								},
+								"sink": {
+									"name": "PARTY_NUM",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "PARTY_NAME",
+									"type": "String"
+								},
+								"sink": {
+									"name": "PARTY_NAME",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ADDRESS1",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ADDRESS1",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ADDRESS2",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ADDRESS2",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ADDRESS3",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ADDRESS3",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ADDRESS4",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ADDRESS4",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "POSTAL_CODE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "POSTAL_CODE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "CITY",
+									"type": "String"
+								},
+								"sink": {
+									"name": "CITY",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "STATE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "STATE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "COUNTRY",
+									"type": "String"
+								},
+								"sink": {
+									"name": "COUNTRY",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "EMAIL_ADDRESS",
+									"type": "String"
+								},
+								"sink": {
+									"name": "EMAIL_ADDRESS",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "SITE_INACTIVE_DT",
+									"type": "String"
+								},
+								"sink": {
+									"name": "SITE_INACTIVE_DT",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "PARTY_SITE_NUM",
+									"type": "String"
+								},
+								"sink": {
+									"name": "PARTY_SITE_NUM",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "PARTY_SITE_NAME",
+									"type": "String"
+								},
+								"sink": {
+									"name": "PARTY_SITE_NAME",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "PAY_GROUP_LOOKUP_CODE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "PAY_GROUP_LOOKUP_CODE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "VENDOR_TYPE_LOOKUP_CODE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "VENDOR_TYPE_LOOKUP_CODE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "SET_OF_BOOKS_ID",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "SET_OF_BOOKS_ID",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "ONE_TIME_FLAG",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ONE_TIME_FLAG",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "REVIEW_TYPE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "REVIEW_TYPE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "STANDARD_INDUSTRY_CLASS",
+									"type": "String"
+								},
+								"sink": {
+									"name": "STANDARD_INDUSTRY_CLASS",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ORGANIZATION_TYPE_LOOKUP_CODE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ORGANIZATION_TYPE_LOOKUP_CODE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ENABLED_FLAG",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ENABLED_FLAG",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "STATE_REPORTABLE_FLAG",
+									"type": "String"
+								},
+								"sink": {
+									"name": "STATE_REPORTABLE_FLAG",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "FEDERAL_REPORTABLE_FLAG",
+									"type": "String"
+								},
+								"sink": {
+									"name": "FEDERAL_REPORTABLE_FLAG",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "INVOICE_CURRENCY_CODE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "INVOICE_CURRENCY_CODE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "PAYMENT_CURRENCY_CODE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "PAYMENT_CURRENCY_CODE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "VAT_NUM",
+									"type": "String"
+								},
+								"sink": {
+									"name": "VAT_NUM",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "PAYMENT_TERMS",
+									"type": "String"
+								},
+								"sink": {
+									"name": "PAYMENT_TERMS",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE1",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE1",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE2",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE2",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE3",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE3",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE4",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE4",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE5",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE5",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "CREATION_DT",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "CREATION_DT",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								}
+							},
+							{
+								"source": {
+									"name": "LAST_UPDATE_DT",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "LAST_UPDATE_DT",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								}
+							},
+							{
+								"source": {
+									"name": "CREATED_BY",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "CREATED_BY",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "LAST_UPDATED_BY",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "LAST_UPDATED_BY",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "INTEGRATION_ID",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "INTEGRATION_ID",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "DATASOURCE_NUM_ID",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "DATASOURCE_NUM_ID",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "ACTIVE_FLAG",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ACTIVE_FLAG",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "DELETE_FLAG",
+									"type": "String"
+								},
+								"sink": {
+									"name": "DELETE_FLAG",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "W_INSERT_DT",
+									"type": "String"
+								},
+								"sink": {
+									"name": "W_INSERT_DT",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								}
+							},
+							{
+								"source": {
+									"name": "W_UPDATE_DT",
+									"type": "String"
+								},
+								"sink": {
+									"name": "W_UPDATE_DT",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								}
+							}
+						],
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "SourceDataset_s4n",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DestinationDataset_s4n",
+						"type": "DatasetReference"
+					}
+				]
+			}
+		],
+		"folder": {
+			"name": "Raja Puranam - DEV/Anchor Packaging V1 - Dont Touch/Source to Stage/AP"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-01-25T14:21:22Z"
+	}
+}

@@ -1,0 +1,487 @@
+{
+	"name": "PL AAACCEL CT_BUSN_LOC_D_STG",
+	"properties": {
+		"description": "Pipeline to extract data into CT_BUSN_LOC_D_STG table in AAACCEL schema.",
+		"activities": [
+			{
+				"name": "CT_BUSN_LOC_D_STG",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [
+					{
+						"name": "Source",
+						"value": "."
+					},
+					{
+						"name": "Destination",
+						"value": "AAAccel.CT_BUSN_LOC_D_STG"
+					}
+				],
+				"typeProperties": {
+					"source": {
+						"type": "OracleSource",
+						"oracleReaderQuery": "/*CT_BUSN_LOC_D_STG*/\r\nSELECT \r\n\tTO_CHAR(HR_ALL_ORGANIZATION_UNITS.ORGANIZATION_ID) AS BUSN_LOC_ID,\r\n\tNULL AS SET_ID,\r\n\tHR_ALL_ORGANIZATION_UNITS.NAME AS BUSN_LOC_NAME,\r\n\tMTL_PARAMETERS.ORGANIZATION_CODE AS BUSN_LOC_NUM,\r\n\t'Plant' AS BUSN_LOC_TYPE,\r\n\t'MAIN' AS ADDRESS_TYPE,\r\n\t(SELECT FULL_NAME   FROM PER_ALL_PEOPLE_F WHERE    PERSON_ID=HR_LOCATIONS_ALL.DESIGNATED_RECEIVER_ID   \r\n\tAND SYSDATE BETWEEN       EFFECTIVE_START_DATE AND NVL(EFFECTIVE_END_DATE,SYSDATE) )                                   \r\n\tAS CONTACT_NAME,\r\n\t(SELECT EMPLOYEE_NUMBER   FROM PER_ALL_PEOPLE_F WHERE    PERSON_ID=HR_LOCATIONS_ALL.DESIGNATED_RECEIVER_ID   \r\n\tAND SYSDATE BETWEEN       EFFECTIVE_START_DATE AND NVL(EFFECTIVE_END_DATE,SYSDATE))     AS CONTACT_NUM,\r\n\t'-'                                                       AS PARENT_LOC_NAME,\r\n\t'-'                                                       AS PARENT_LOC_NUM,\r\n\tHR_LOCATIONS_ALL.ADDRESS_LINE_1 AS ST_ADDRESS1, \r\n\tHR_LOCATIONS_ALL.ADDRESS_LINE_2 AS ST_ADDRESS2, \r\n\tHR_LOCATIONS_ALL.ADDRESS_LINE_3 AS ST_ADDRESS3, \r\n\t'-' AS ST_ADDRESS4, \r\n\tHR_LOCATIONS_ALL.TOWN_OR_CITY   AS CITY_NAME,\r\n\tHR_LOCATIONS_ALL.POSTAL_CODE    AS POSTAL_CODE, \r\n\tHR_LOCATIONS_ALL.REGION_2               AS STATE_REGION,\r\n\tHR_LOCATIONS_ALL.COUNTRY AS COUNTRY_CODE, \r\n\tCOUNTRY.TERRITORY_SHORT_NAME  AS COUNTRY_NAME,\r\n\tHR_LOCATIONS_ALL.REGION_1                         AS COUNTRY_REGION,\r\n\tHR_LOCATIONS_ALL.TELEPHONE_NUMBER_1 AS PHONE_NUM, \r\n\tNVL(HR_LOCATIONS_ALL.TELEPHONE_NUMBER_2, '-') AS FAX_NUM,\r\n\t'-'     AS WEB_ADDRESS ,\r\n\tHR_LOCATIONS_ALL.REGION_2 AS STATE_CODE,\r\n\tSTATE.TERRITORY_SHORT_NAME AS STATE_NAME,\r\n\t'-' AS EMAIL_ADDRESS,\r\n\t(CASE WHEN TRUNC(HR_LOCATIONS_ALL.INACTIVE_DATE)>TRUNC(SYSDATE) then 'ACTIVE' else 'INACTIVE' END) AS ACTIVE_STATUS, \r\n\tHR_ALL_ORGANIZATION_UNITS.DATE_FROM AS EFFECTIVE_FROM_DT,\r\n\tHR_ALL_ORGANIZATION_UNITS.DATE_TO AS EFFECTIVE_TO_DT,\r\n\tNULL AS LOCATION_DETAILS_ID,\r\n\tMTL_PARAMETERS.CREATION_DATE AS CREATION_DT,\r\n\tMTL_PARAMETERS.LAST_UPDATE_DATE AS LAST_UPDATE_DT,\r\n\tMTL_PARAMETERS.CREATED_BY AS CREATED_BY,\r\n\tMTL_PARAMETERS.LAST_UPDATED_BY AS LAST_UPDATED_BY,\r\n\t'Plant~'||TO_CHAR(HR_ALL_ORGANIZATION_UNITS.ORGANIZATION_ID) AS INTEGRATION_ID,\r\n\t1000 AS DATASOURCE_NUM_ID,\r\n\t'Y' ACTIVE_FLAG,\r\n\t'N' DELETE_FLAG\r\nFROM \r\n\tMTL_PARAMETERS,\r\n\tHR_ALL_ORGANIZATION_UNITS,\r\n\tHR_LOCATIONS_ALL,\r\n\tFND_TERRITORIES_TL  COUNTRY,\r\n\tFND_TERRITORIES_TL STATE  \r\nWHERE \r\n\tHR_ALL_ORGANIZATION_UNITS.ORGANIZATION_ID = MTL_PARAMETERS.ORGANIZATION_ID\r\n\tAND HR_ALL_ORGANIZATION_UNITS.LOCATION_ID = HR_LOCATIONS_ALL.LOCATION_ID\r\n\tAND HR_LOCATIONS_ALL.COUNTRY = COUNTRY.TERRITORY_CODE (+)\r\n\tAND HR_LOCATIONS_ALL.REGION_2 = STATE.TERRITORY_CODE (+)\r\n\tAND COUNTRY.LANGUAGE(+) = 'US'\r\n\tAND STATE.LANGUAGE(+) = 'US'\r\n\t--AND TO_CHAR(MTL_PARAMETERS.LAST_UPDATE_DATE, 'YYYY-MM-DD HH24:MI:SS') >= '2022-01-01'\r\n\r\nUNION\r\n\r\nSELECT \r\n\tTO_CHAR(HR_ALL_ORGANIZATION_UNITS.ORGANIZATION_ID) AS BUSN_LOC_ID,\r\n\tNULL AS SET_ID,\r\n\tMTL_SECONDARY_INVENTORIES.DESCRIPTION AS BUSN_LOC_NAME,\r\n\tMTL_SECONDARY_INVENTORIES.SECONDARY_INVENTORY_NAME AS BUSN_LOC_NUM,\r\n\t'STORAGE_LOC' AS BUSN_LOC_TYPE,\r\n\t'MAIN' AS ADDRESS_TYPE,\r\n\t(SELECT FULL_NAME   FROM PER_ALL_PEOPLE_F WHERE    PERSON_ID=HR_LOCATIONS_ALL.DESIGNATED_RECEIVER_ID   \r\n\tAND SYSDATE BETWEEN       EFFECTIVE_START_DATE AND NVL(EFFECTIVE_END_DATE,SYSDATE) )                                   \r\n\tAS CONTACT_NAME,\r\n\t(SELECT EMPLOYEE_NUMBER   FROM PER_ALL_PEOPLE_F WHERE    PERSON_ID=HR_LOCATIONS_ALL.DESIGNATED_RECEIVER_ID   \r\n\tAND SYSDATE BETWEEN       EFFECTIVE_START_DATE AND NVL(EFFECTIVE_END_DATE,SYSDATE) )  AS CONTACT_NUM,\r\n\t'-'                                                       AS PARENT_LOC_NAME,\r\n\t'-'                                                       AS PARENT_LOC_NUM,\r\n\tHR_LOCATIONS_ALL.ADDRESS_LINE_1 AS ST_ADDRESS1, \r\n\tHR_LOCATIONS_ALL.ADDRESS_LINE_2 AS ST_ADDRESS2, \r\n\tHR_LOCATIONS_ALL.ADDRESS_LINE_3 AS ST_ADDRESS3, \r\n\t'-' AS ST_ADDRESS4, \r\n\tHR_LOCATIONS_ALL.TOWN_OR_CITY   AS CITY_NAME,\r\n\tHR_LOCATIONS_ALL.POSTAL_CODE    AS POSTAL_CODE, \r\n\tHR_LOCATIONS_ALL.REGION_2               AS STATE_REGION,\r\n\tHR_LOCATIONS_ALL.COUNTRY AS COUNTRY_CODE, \r\n\tCOUNTRY.TERRITORY_SHORT_NAME  AS COUNTRY_NAME,\r\n\tHR_LOCATIONS_ALL.REGION_1                         AS COUNTRY_REGION,\r\n\tHR_LOCATIONS_ALL.TELEPHONE_NUMBER_1 AS PHONE_NUM, \r\n\tNVL(HR_LOCATIONS_ALL.TELEPHONE_NUMBER_2, '-') AS FAX_NUM,\r\n\t'-'     AS WEB_ADDRESS ,\r\n\tHR_LOCATIONS_ALL.REGION_2 AS STATE_CODE,\r\n\tSTATE.TERRITORY_SHORT_NAME AS STATE_NAME,\r\n\t'-' AS EMAIL_ADDRESS,\r\n\t(CASE WHEN TRUNC(HR_LOCATIONS_ALL.INACTIVE_DATE)>TRUNC(SYSDATE) then 'ACTIVE' else 'INACTIVE' END) AS ACTIVE_STATUS, \r\n\tHR_ALL_ORGANIZATION_UNITS.DATE_FROM AS EFFECTIVE_FROM_DT,\r\n\tHR_ALL_ORGANIZATION_UNITS.DATE_TO AS EFFECTIVE_TO_DT,\r\n\tNULL AS LOCATION_DETAILS_ID,\r\n\tMTL_SECONDARY_INVENTORIES.CREATION_DATE AS CREATION_DT,\r\n\tMTL_SECONDARY_INVENTORIES.LAST_UPDATE_DATE AS LAST_UPDATE_DT,\r\n\tMTL_SECONDARY_INVENTORIES.CREATED_BY AS CREATED_BY,\r\n\tMTL_SECONDARY_INVENTORIES.LAST_UPDATED_BY AS LAST_UPDATED_BY,\r\n\t'STORAGE_LOC~'||TO_CHAR(HR_ALL_ORGANIZATION_UNITS.ORGANIZATION_ID)||'~'||MTL_SECONDARY_INVENTORIES.SECONDARY_INVENTORY_NAME AS INTEGRATION_ID,\r\n\t1000 AS DATASOURCE_NUM_ID,\r\n\t'Y' ACTIVE_FLAG,\r\n\t'N' DELETE_FLAG\r\nFROM  \r\n\tMTL_SECONDARY_INVENTORIES,\r\n\tHR_ALL_ORGANIZATION_UNITS,\r\n\tHR_LOCATIONS_ALL,\r\n\tFND_TERRITORIES_TL COUNTRY,\r\n\tFND_TERRITORIES_TL STATE\r\nWHERE \r\n\tMTL_SECONDARY_INVENTORIES.ORGANIZATION_ID = HR_ALL_ORGANIZATION_UNITS.ORGANIZATION_ID\r\n\tAND HR_ALL_ORGANIZATION_UNITS.LOCATION_ID = HR_LOCATIONS_ALL.LOCATION_ID\r\n\tAND HR_LOCATIONS_ALL.COUNTRY = COUNTRY.TERRITORY_CODE (+)\r\n\tAND HR_LOCATIONS_ALL.REGION_2 = STATE.TERRITORY_CODE (+)\r\n\tAND COUNTRY.LANGUAGE(+) = 'US'\r\n\tAND STATE.LANGUAGE(+) = 'US'\r\n\t--AND TO_CHAR(MTL_SECONDARY_INVENTORIES.LAST_UPDATE_DATE, 'YYYY-MM-DD HH24:MI:SS') >= '2022-01-01'\r\n\r\nUNION\r\n\r\nSELECT \r\n\tTO_CHAR(MTL_ITEM_LOCATIONS.INVENTORY_LOCATION_ID) BUSN_LOC_ID,\r\n\tNULL AS SET_ID,\r\n\tMTL_ITEM_LOCATIONS.DESCRIPTION AS BUSN_LOC_NAME,\r\n\tTO_CHAR(MTL_ITEM_LOCATIONS.INVENTORY_LOCATION_ID) AS BUSN_LOC_NUM,\r\n\t'INV_LOC' AS BUSN_LOC_TYPE,\r\n\t'MAIN' AS ADDRESS_TYPE,\r\n\t'-' AS CONTACT_NAME,\r\n\t'-' AS CONTACT_NUM,\r\n\t'-' AS PARENT_LOC_NAME,\r\n\t'-' AS PARENT_LOC_NUM,\r\n\t'-' AS ST_ADDRESS1,\r\n\t'-' AS ST_ADDRESS2,\r\n\t'-' AS ST_ADDRESS3,\r\n\t'-' AS ST_ADDRESS4,\r\n\t'-' AS CITY_NAME,\r\n\t'-' AS POSTAL_CODE,\r\n\t'-' AS STATE_REGION,\r\n\t'-' AS COUNTRY_CODE,\r\n\t'-' AS COUNTRY_NAME,\r\n\t'-' AS COUNTRY_REGION,\r\n\t'-' AS PHONE_NUM,\r\n\t'-' AS FAX_NUM,\r\n\t'-' AS WEB_ADDRESS,\r\n\t'-' AS STATE_CODE,\r\n\t'-' AS STATE_NAME,\r\n\t'-' AS EMAIL_ADDRESS,\r\n\t'Y' AS ACTIVE_STATUS,\r\n\tMTL_ITEM_LOCATIONS.START_DATE_ACTIVE AS EFFECTIVE_FROM_DT,\r\n\tMTL_ITEM_LOCATIONS.END_DATE_ACTIVE AS EFFECTIVE_TO_DT,\r\n\tNULL AS LOCATION_DETAILS_ID,\r\n\tMTL_ITEM_LOCATIONS.CREATION_DATE AS CREATION_DT,\r\n\tMTL_ITEM_LOCATIONS.LAST_UPDATE_DATE AS LAST_UPDATE_DT,\r\n\tMTL_ITEM_LOCATIONS.CREATED_BY AS CREATED_BY,\r\n\tMTL_ITEM_LOCATIONS.LAST_UPDATED_BY AS LAST_UPDATED_BY,\r\n\t'INV_LOC~'||TO_CHAR(MTL_ITEM_LOCATIONS.INVENTORY_LOCATION_ID) INTEGRATION_ID,\r\n\t1000 AS DATASOURCE_NUM_ID,\r\n\t'Y' ACTIVE_FLAG,\r\n\t'N' DELETE_FLAG\r\nFROM \r\n\tMTL_ITEM_LOCATIONS_KFV MTL_ITEM_LOCATIONS, \r\n\tMTL_SECONDARY_INVENTORIES \r\nWHERE \r\n\tMTL_ITEM_LOCATIONS.ORGANIZATION_ID = MTL_SECONDARY_INVENTORIES.ORGANIZATION_ID \r\n\tAND MTL_ITEM_LOCATIONS.SUBINVENTORY_CODE = MTL_SECONDARY_INVENTORIES.SECONDARY_INVENTORY_NAME\r\n\t--AND TO_CHAR(MTL_ITEM_LOCATIONS.LAST_UPDATE_DATE, 'YYYY-MM-DD HH24:MI:SS') >= '2022-01-01'\r\n\r\nUNION\r\n\r\nSELECT\r\n\tTO_CHAR(LOC.LOCATION_ID) AS BUSN_LOC_ID,\r\n\tNULL                     AS SET_ID,\r\n\tLOT.DESCRIPTION           AS BUSN_LOC_NAME,\r\n\tTO_CHAR(LOC.LOCATION_ID) AS BUSN_LOC_NUM,\r\n\t'EMP_LOC' AS BUSN_LOC_TYPE,\r\n\t'-'      AS ADDRESS_TYPE,\r\n\t'-'                                                        AS CONTACT_NAME,\r\n\t'-'                                                        AS CONTACT_NUM,\r\n\t'-'                                                       AS PARENT_LOC_NAME,\r\n\t'-'                                                       AS PARENT_LOC_NUM,\r\n\tLOC.ADDRESS_LINE_1         AS ST_ADDRESS1,\r\n\tLOC.ADDRESS_LINE_2         AS ST_ADDRESS2,\r\n\tLOC.ADDRESS_LINE_3         AS ST_ADDRESS3,\r\n\t'-'                        AS ST_ADDRESS4,\r\n\tLOC.TOWN_OR_CITY           AS CITY_NAME,\r\n\tLOC.POSTAL_CODE            AS POSTAL_CODE,\r\n\t'-'               AS STATE_REGION,\r\n\tLOC.COUNTRY                AS COUNTRY_CODE,\r\n\tTER.TERRITORY_SHORT_NAME    AS COUNTRY_NAME,\r\n\t'-'                        AS COUNTRY_REGION,\r\n\tLOC.TELEPHONE_NUMBER_1      AS PHONE_NUM,\r\n\tNVL(LOC.TELEPHONE_NUMBER_2, '-') AS FAX_NUM,\r\n\t'-'      AS WEB_ADDRESS ,\r\n\tLOC.REGION_2               AS STATE_CODE,\r\n\tLOC.REGION_1               AS STATE_NAME,\r\n\t'-'           AS EMAIL_ADDRESS,\r\n\t'-'        AS ACTIVE_STATUS,\r\n\tNULL AS EFFECTIVE_FROM_DT,\r\n\tNULL AS EFFECTIVE_TO_DT,\r\n\tNULL AS LOCATION_DETAILS_ID,\r\n\tLOC.CREATION_DATE  AS CREATION_DT,\r\n\tLOC.LAST_UPDATE_DATE AS LAST_UPDATE_DT,\r\n\tLOC.CREATED_BY AS CREATED_BY,\r\n\tLOC.LAST_UPDATED_BY AS LAST_UPDATED_BY,\r\n\tTO_CHAR(LOC.LOCATION_ID) AS INTEGRATION_ID,\r\n\t1000 AS DATASOURCE_NUM_ID,\r\n\t'Y' ACTIVE_FLAG,\r\n\t'N' DELETE_FLAG\r\nFROM\r\n\tHR_LOCATIONS_ALL      LOC,\r\n\tHR_LOCATIONS_ALL_TL   LOT,\r\n\tFND_TERRITORIES_TL TER\r\nWHERE   1=1\r\n\tAND LOC.LOCATION_ID = LOT.LOCATION_ID\r\n\tAND LOT.LANGUAGE = 'US'\r\n\tAND LOC.COUNTRY = TER.TERRITORY_CODE (+)\r\n\tAND TER.LANGUAGE(+) = 'US'\r\n\t--AND TO_CHAR(LOC.LAST_UPDATE_DATE, 'YYYY-MM-DD HH24:MI:SS') >= '2022-01-01'\r\n;",
+						"partitionOption": "None"
+					},
+					"sink": {
+						"type": "AzureSqlSink"
+					},
+					"enableStaging": false,
+					"validateDataConsistency": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "BUSN_LOC_ID",
+									"type": "String"
+								},
+								"sink": {
+									"name": "BUSN_LOC_ID",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "SET_ID",
+									"type": "String"
+								},
+								"sink": {
+									"name": "SET_ID",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "BUSN_LOC_NAME",
+									"type": "String"
+								},
+								"sink": {
+									"name": "BUSN_LOC_NAME",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "BUSN_LOC_NUM",
+									"type": "String"
+								},
+								"sink": {
+									"name": "BUSN_LOC_NUM",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "BUSN_LOC_TYPE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "BUSN_LOC_TYPE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ADDRESS_TYPE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ADDRESS_TYPE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "CONTACT_NAME",
+									"type": "String"
+								},
+								"sink": {
+									"name": "CONTACT_NAME",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "CONTACT_NUM",
+									"type": "String"
+								},
+								"sink": {
+									"name": "CONTACT_NUM",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "PARENT_LOC_NAME",
+									"type": "String"
+								},
+								"sink": {
+									"name": "PARENT_LOC_NAME",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "PARENT_LOC_NUM",
+									"type": "String"
+								},
+								"sink": {
+									"name": "PARENT_LOC_NUM",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ST_ADDRESS1",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ST_ADDRESS1",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ST_ADDRESS2",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ST_ADDRESS2",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ST_ADDRESS3",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ST_ADDRESS3",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ST_ADDRESS4",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ST_ADDRESS4",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "CITY_NAME",
+									"type": "String"
+								},
+								"sink": {
+									"name": "CITY_NAME",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "POSTAL_CODE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "POSTAL_CODE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "STATE_REGION",
+									"type": "String"
+								},
+								"sink": {
+									"name": "STATE_REGION",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "COUNTRY_CODE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "COUNTRY_CODE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "COUNTRY_NAME",
+									"type": "String"
+								},
+								"sink": {
+									"name": "COUNTRY_NAME",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "COUNTRY_REGION",
+									"type": "String"
+								},
+								"sink": {
+									"name": "COUNTRY_REGION",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "PHONE_NUM",
+									"type": "String"
+								},
+								"sink": {
+									"name": "PHONE_NUM",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "FAX_NUM",
+									"type": "String"
+								},
+								"sink": {
+									"name": "FAX_NUM",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "WEB_ADDRESS",
+									"type": "String"
+								},
+								"sink": {
+									"name": "WEB_ADDRESS",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "STATE_CODE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "STATE_CODE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "STATE_NAME",
+									"type": "String"
+								},
+								"sink": {
+									"name": "STATE_NAME",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "EMAIL_ADDRESS",
+									"type": "String"
+								},
+								"sink": {
+									"name": "EMAIL_ADDRESS",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ACTIVE_STATUS",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ACTIVE_STATUS",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "EFFECTIVE_FROM_DT",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "EFFECTIVE_FROM_DT",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								}
+							},
+							{
+								"source": {
+									"name": "EFFECTIVE_TO_DT",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "EFFECTIVE_TO_DT",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								}
+							},
+							{
+								"source": {
+									"name": "LOCATION_DETAILS_ID",
+									"type": "String"
+								},
+								"sink": {
+									"name": "LOCATION_DETAILS_ID",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "CREATION_DT",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "CREATION_DT",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								}
+							},
+							{
+								"source": {
+									"name": "LAST_UPDATE_DT",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "LAST_UPDATE_DT",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								}
+							},
+							{
+								"source": {
+									"name": "CREATED_BY",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "CREATED_BY",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "LAST_UPDATED_BY",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "LAST_UPDATED_BY",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "INTEGRATION_ID",
+									"type": "String"
+								},
+								"sink": {
+									"name": "INTEGRATION_ID",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "DATASOURCE_NUM_ID",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "DATASOURCE_NUM_ID",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "ACTIVE_FLAG",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ACTIVE_FLAG",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "DELETE_FLAG",
+									"type": "String"
+								},
+								"sink": {
+									"name": "DELETE_FLAG",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							}
+						],
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "SourceDataset_z6a",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DestinationDataset_z6a",
+						"type": "DatasetReference"
+					}
+				]
+			}
+		],
+		"folder": {
+			"name": "Raja Puranam - DEV/Anchor Packaging V1 - Dont Touch/Source to Stage/CD"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-01-25T14:19:49Z"
+	}
+}

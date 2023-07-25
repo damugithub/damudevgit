@@ -1,0 +1,1004 @@
+{
+	"name": "PL AAACCEL CT_PRODUCT_D_STG",
+	"properties": {
+		"description": "Pipeline to extract data into CT_PRODUCT_D_STG table in AAACCEL schema.",
+		"activities": [
+			{
+				"name": "CT_PRODUCT_D_STG",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [
+					{
+						"name": "Source",
+						"value": "."
+					},
+					{
+						"name": "Destination",
+						"value": "AAAccel.CT_PRODUCT_D_STG"
+					}
+				],
+				"typeProperties": {
+					"source": {
+						"type": "OracleSource",
+						"oracleReaderQuery": "/*CT_PRODUCT_D_STG*/\r\nSELECT \r\n    MTL_SYSTEM_ITEMS_B.SEGMENT1 AS PRODUCT_NUM,\r\n    MTL_SYSTEM_ITEMS_B.DESCRIPTION AS PRODUCT_NAME,\r\n    MTL_SYSTEM_ITEMS_B.ITEM_TYPE AS PRODUCT_TYPE_CODE, \r\n    fnd_lookup_values.meaning    AS PRODUCT_TYPE_DESC,\r\n    NULL AS BASIC_PRODUCT,\r\n    MTL_SYSTEM_ITEMS_B.CONFIG_MODEL_TYPE AS CONFIG_PROD_IND,\r\n    MTL_SYSTEM_ITEMS_B.CONTAINER_TYPE_CODE AS CONTAINER_CODE,\r\n    NULL AS CONTAINER_DESC,\r\n    MTL_SYSTEM_ITEMS_B.PLANNING_MAKE_BUY_CODE MAKE_BUY_IND,\r\n    NULL AS PROD_GRP_CODE,\r\n    NULL AS PROD_GRP_DESC,\r\n    NULL AS STORAGE_TYPE_CODE,\r\n    NULL AS STORAGE_TYPE_DESC,\r\n    MTL_SYSTEM_ITEMS_B.CUSTOMER_ORDER_FLAG AS CUSTOM_PROD_FLAG,\r\n    MTL_SYSTEM_ITEMS_B.RETURNABLE_FLAG AS RTRN_DEFECTIVE_FLAG,\r\n    SERVICEABLE_COMPONENT_FLAG AS SALES_PROD_FLAG,\r\n    SERVICEABLE_PRODUCT_FLAG AS SALES_SRVC_FLAG,\r\n    SERIAL_STATUS_ENABLED AS SERIALIZED_FLAG,\r\n    MTL_SYSTEM_ITEMS_B.STD_LOT_SIZE AS ITEM_SIZE,\r\n    NULL AS VENDOR_LOC,\r\n    NULL AS VENDOR_NAME,\r\n    MTL_SYSTEM_ITEMS_B.PRIMARY_UOM_CODE AS SALES_UOM_CODE,\r\n    MTL_SYSTEM_ITEMS_B.PRIMARY_UNIT_OF_MEASURE AS SALES_UOM_DESC,\r\n    MTL_SYSTEM_ITEMS_B.SERIAL_NUMBER_CONTROL_CODE AS SERIALIZED_COUNT,\r\n    NULL AS SHIP_TYPE_CODE,\r\n    NULL AS SHIP_TYPE_DESC,\r\n    NULL AS SOURCE_OF_SUPPLY,\r\n    NULL AS SPRT_WITHDRAWL_DATE,\r\n    MTL_SYSTEM_ITEMS_B.PRIMARY_UOM_CODE UOM,\r\n    MTL_SYSTEM_ITEMS_B.VOLUME_UOM_CODE AS BASE_UOM_CODE,  \r\n    NULL AS BASE_UOM_DESC,\r\n    MTL_SYSTEM_ITEMS_B.UNIT_WEIGHT UNIT_GROSS_WEIGHT,\r\n    MTL_SYSTEM_ITEMS_B.UNIT_WEIGHT UNIT_NET_WEIGHT,\r\n    MTL_SYSTEM_ITEMS_B.UNIT_VOLUME, \r\n    NULL AS UNIV_PROD_CODE,\r\n    NULL AS UNIV_PROD_DESC,\r\n    --NULL AS UOV_CODE,\r\n    --NULL AS UOV_DESC,\r\n    NULL AS APPLICATION_FLAG,\r\n    NULL AS GROSS_MRGN,\r\n    MTL_SYSTEM_ITEMS_B.INVENTORY_ITEM_FLAG INVENTORY_FLAG,\r\n    MTL_SYSTEM_ITEMS_B.PLANNING_MAKE_BUY_CODE MAKE_CODE,\r\n    NULL AS MODEL_CODE,\r\n    NULL AS MODEL_YR,\r\n    MTL_SYSTEM_ITEMS_B.CUSTOMER_ORDER_ENABLED_FLAG AS ORDERABLE_FLAG,\r\n    ITEM_TYPE AS PROD_TYPE,\r\n    MTL_SYSTEM_ITEMS_B.APPROVAL_STATUS AS STATUS,\r\n    NULL AS SUB_TYPE,\r\n    ROUNDING_FACTOR AS UNIT_CONV_FACTOR,\r\n    NULL AS PROD_HIER1_CODE,\r\n    NULL AS PROD_HIER1_NAME,\r\n    NULL AS PROD_HIER2_CODE,\r\n    NULL AS PROD_HIER2_NAME,\r\n    NULL AS PROD_HIER3_CODE,\r\n    NULL AS PROD_HIER3_NAME,\r\n    NULL AS PROD_HIER4_CODE,\r\n    NULL AS PROD_HIER4_NAME,\r\n    NULL AS PROD_HIER5_CODE,\r\n    NULL AS PROD_HIER5_NAME,\r\n    NULL AS PROD_HIER6_CODE,\r\n    NULL AS PROD_HIER6_NAME,\r\n    NULL AS PROD_CAT1_KEY,\r\n    NULL AS PROD_CAT2_KEY,\r\n    NULL AS PROD_CAT3_KEY,\r\n    NULL AS PROD_CAT4_KEY,\r\n    NULL AS PROD_CAT5_KEY,\r\n    NULL AS PROD_CAT6_KEY,\r\n    NULL AS PROD_CAT7_KEY,\r\n    NULL AS PROD_CAT8_KEY,\r\n    NULL AS PROD_CAT9_KEY,\r\n    NULL AS PROD_CAT10_KEY,\r\n    NULL AS PRODUCT_CATEGORY_FLAG,\r\n    MTL_SYSTEM_ITEMS_B.ATTRIBUTE1,\r\n    MTL_SYSTEM_ITEMS_B.ATTRIBUTE2,\r\n    MTL_SYSTEM_ITEMS_B.ATTRIBUTE3,\r\n    MTL_SYSTEM_ITEMS_B.ATTRIBUTE4,\r\n    MTL_SYSTEM_ITEMS_B.ATTRIBUTE5,\r\n    MTL_SYSTEM_ITEMS_B.CREATION_DATE,\r\n    MTL_SYSTEM_ITEMS_B.LAST_UPDATE_DATE, \r\n    MTL_SYSTEM_ITEMS_B.CREATED_BY,\r\n    MTL_SYSTEM_ITEMS_B.LAST_UPDATED_BY, \r\n    TO_CHAR(MTL_SYSTEM_ITEMS_B.INVENTORY_ITEM_ID) INTEGRATION_ID,  \r\n    1000 DATASOURCE_NUM_ID,\r\n    'Y' CURRENT_FLAG,\r\n    'N' DELETE_FLAG,\r\n    SYSDATE W_INSERT_DT,\r\n    SYSDATE W_UPDATE_DT\r\nFROM\r\n    MTL_SYSTEM_ITEMS_B, \r\n    MTL_PARAMETERS ,\r\n    fnd_lookup_values\r\nWHERE\r\n MTL_SYSTEM_ITEMS_B.ORGANIZATION_ID = MTL_PARAMETERS.ORGANIZATION_ID \r\n AND MTL_PARAMETERS.MASTER_ORGANIZATION_ID =  MTL_PARAMETERS.ORGANIZATION_ID \r\n AND fnd_lookup_values.lookup_type(+) = 'ITEM_TYPE'\r\nand fnd_lookup_values.language(+) = 'US'\r\nand fnd_lookup_values.lookup_code(+) = MTL_SYSTEM_ITEMS_B.item_type\r\n --AND MTL_SYSTEM_ITEMS_B.LAST_UPDATE_DATE > TO_DATE('$$LAST_EXTRACT_DATE', 'MM/DD/YYYY HH24:MI:SS')  \r\n AND MTL_PARAMETERS.MASTER_ORGANIZATION_ID IN (204) /*Replace MASTER_ORG with Master ORGANIZATION_ID*/\r\n;",
+						"partitionOption": "None"
+					},
+					"sink": {
+						"type": "AzureSqlSink"
+					},
+					"enableStaging": false,
+					"validateDataConsistency": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "PRODUCT_NUM",
+									"type": "String"
+								},
+								"sink": {
+									"name": "PRODUCT_NUM",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "PRODUCT_NAME",
+									"type": "String"
+								},
+								"sink": {
+									"name": "PRODUCT_NAME",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "PRODUCT_TYPE_CODE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "PRODUCT_TYPE_CODE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "PRODUCT_TYPE_DESC",
+									"type": "String"
+								},
+								"sink": {
+									"name": "PRODUCT_TYPE_DESC",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "BASIC_PRODUCT",
+									"type": "String"
+								},
+								"sink": {
+									"name": "BASIC_PRODUCT",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "CONFIG_PROD_IND",
+									"type": "String"
+								},
+								"sink": {
+									"name": "CONFIG_PROD_IND",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "CONTAINER_CODE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "CONTAINER_CODE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "CONTAINER_DESC",
+									"type": "String"
+								},
+								"sink": {
+									"name": "CONTAINER_DESC",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "MAKE_BUY_IND",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "MAKE_BUY_IND",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "PROD_GRP_CODE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "PROD_GRP_CODE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "PROD_GRP_DESC",
+									"type": "String"
+								},
+								"sink": {
+									"name": "PROD_GRP_DESC",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "STORAGE_TYPE_CODE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "STORAGE_TYPE_CODE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "STORAGE_TYPE_DESC",
+									"type": "String"
+								},
+								"sink": {
+									"name": "STORAGE_TYPE_DESC",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "CUSTOM_PROD_FLAG",
+									"type": "String"
+								},
+								"sink": {
+									"name": "CUSTOM_PROD_FLAG",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "RTRN_DEFECTIVE_FLAG",
+									"type": "String"
+								},
+								"sink": {
+									"name": "RTRN_DEFECTIVE_FLAG",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "SALES_PROD_FLAG",
+									"type": "String"
+								},
+								"sink": {
+									"name": "SALES_PROD_FLAG",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "SALES_SRVC_FLAG",
+									"type": "String"
+								},
+								"sink": {
+									"name": "SALES_SRVC_FLAG",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "SERIALIZED_FLAG",
+									"type": "String"
+								},
+								"sink": {
+									"name": "SERIALIZED_FLAG",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ITEM_SIZE",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "ITEM_SIZE",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "VENDOR_LOC",
+									"type": "String"
+								},
+								"sink": {
+									"name": "VENDOR_LOC",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "VENDOR_NAME",
+									"type": "String"
+								},
+								"sink": {
+									"name": "VENDOR_NAME",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "SALES_UOM_CODE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "SALES_UOM_CODE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "SALES_UOM_DESC",
+									"type": "String"
+								},
+								"sink": {
+									"name": "SALES_UOM_DESC",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "SERIALIZED_COUNT",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "SERIALIZED_COUNT",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "SHIP_TYPE_CODE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "SHIP_TYPE_CODE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "SHIP_TYPE_DESC",
+									"type": "String"
+								},
+								"sink": {
+									"name": "SHIP_TYPE_DESC",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "SOURCE_OF_SUPPLY",
+									"type": "String"
+								},
+								"sink": {
+									"name": "SOURCE_OF_SUPPLY",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "SPRT_WITHDRAWL_DATE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "SPRT_WITHDRAWL_DATE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "UOM",
+									"type": "String"
+								},
+								"sink": {
+									"name": "UOM",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "BASE_UOM_CODE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "BASE_UOM_CODE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "BASE_UOM_DESC",
+									"type": "String"
+								},
+								"sink": {
+									"name": "BASE_UOM_DESC",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "UNIT_GROSS_WEIGHT",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "UNIT_GROSS_WEIGHT",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "UNIT_NET_WEIGHT",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "UNIT_NET_WEIGHT",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "UNIT_VOLUME",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "UNIT_VOLUME",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "UNIV_PROD_CODE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "UNIV_PROD_CODE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "UNIV_PROD_DESC",
+									"type": "String"
+								},
+								"sink": {
+									"name": "UNIV_PROD_DESC",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "APPLICATION_FLAG",
+									"type": "String"
+								},
+								"sink": {
+									"name": "APPLICATION_FLAG",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "GROSS_MRGN",
+									"type": "String"
+								},
+								"sink": {
+									"name": "GROSS_MRGN",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "INVENTORY_FLAG",
+									"type": "String"
+								},
+								"sink": {
+									"name": "INVENTORY_FLAG",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "MAKE_CODE",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "MAKE_CODE",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "MODEL_CODE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "MODEL_CODE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "MODEL_YR",
+									"type": "String"
+								},
+								"sink": {
+									"name": "MODEL_YR",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ORDERABLE_FLAG",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ORDERABLE_FLAG",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "PROD_TYPE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "PROD_TYPE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "STATUS",
+									"type": "String"
+								},
+								"sink": {
+									"name": "STATUS",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "SUB_TYPE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "SUB_TYPE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "UNIT_CONV_FACTOR",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "UNIT_CONV_FACTOR",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "PROD_HIER1_CODE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "PROD_HIER1_CODE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "PROD_HIER1_NAME",
+									"type": "String"
+								},
+								"sink": {
+									"name": "PROD_HIER1_NAME",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "PROD_HIER2_CODE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "PROD_HIER2_CODE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "PROD_HIER2_NAME",
+									"type": "String"
+								},
+								"sink": {
+									"name": "PROD_HIER2_NAME",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "PROD_HIER3_CODE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "PROD_HIER3_CODE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "PROD_HIER3_NAME",
+									"type": "String"
+								},
+								"sink": {
+									"name": "PROD_HIER3_NAME",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "PROD_HIER4_CODE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "PROD_HIER4_CODE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "PROD_HIER4_NAME",
+									"type": "String"
+								},
+								"sink": {
+									"name": "PROD_HIER4_NAME",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "PROD_HIER5_CODE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "PROD_HIER5_CODE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "PROD_HIER5_NAME",
+									"type": "String"
+								},
+								"sink": {
+									"name": "PROD_HIER5_NAME",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "PROD_HIER6_CODE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "PROD_HIER6_CODE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "PROD_HIER6_NAME",
+									"type": "String"
+								},
+								"sink": {
+									"name": "PROD_HIER6_NAME",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "PROD_CAT1_KEY",
+									"type": "String"
+								},
+								"sink": {
+									"name": "PROD_CAT1_KEY",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "PROD_CAT2_KEY",
+									"type": "String"
+								},
+								"sink": {
+									"name": "PROD_CAT2_KEY",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "PROD_CAT3_KEY",
+									"type": "String"
+								},
+								"sink": {
+									"name": "PROD_CAT3_KEY",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "PROD_CAT4_KEY",
+									"type": "String"
+								},
+								"sink": {
+									"name": "PROD_CAT4_KEY",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "PROD_CAT5_KEY",
+									"type": "String"
+								},
+								"sink": {
+									"name": "PROD_CAT5_KEY",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "PROD_CAT6_KEY",
+									"type": "String"
+								},
+								"sink": {
+									"name": "PROD_CAT6_KEY",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "PROD_CAT7_KEY",
+									"type": "String"
+								},
+								"sink": {
+									"name": "PROD_CAT7_KEY",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "PROD_CAT8_KEY",
+									"type": "String"
+								},
+								"sink": {
+									"name": "PROD_CAT8_KEY",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "PROD_CAT9_KEY",
+									"type": "String"
+								},
+								"sink": {
+									"name": "PROD_CAT9_KEY",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "PROD_CAT10_KEY",
+									"type": "String"
+								},
+								"sink": {
+									"name": "PROD_CAT10_KEY",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "PRODUCT_CATEGORY_FLAG",
+									"type": "String"
+								},
+								"sink": {
+									"name": "PRODUCT_CATEGORY_FLAG",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE1",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE1",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE2",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE2",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE3",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE3",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE4",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE4",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE5",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE5",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "CREATION_DATE",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "CREATION_DATE",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								}
+							},
+							{
+								"source": {
+									"name": "LAST_UPDATE_DATE",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "LAST_UPDATE_DATE",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								}
+							},
+							{
+								"source": {
+									"name": "CREATED_BY",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "CREATED_BY",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "LAST_UPDATED_BY",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "LAST_UPDATED_BY",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "INTEGRATION_ID",
+									"type": "String"
+								},
+								"sink": {
+									"name": "INTEGRATION_ID",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "DATASOURCE_NUM_ID",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "DATASOURCE_NUM_ID",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "CURRENT_FLAG",
+									"type": "String"
+								},
+								"sink": {
+									"name": "CURRENT_FLAG",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "DELETE_FLAG",
+									"type": "String"
+								},
+								"sink": {
+									"name": "DELETE_FLAG",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "W_INSERT_DT",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "W_INSERT_DT",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								}
+							},
+							{
+								"source": {
+									"name": "W_UPDATE_DT",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "W_UPDATE_DT",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								}
+							}
+						],
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "SourceDataset_npd",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DestinationDataset_npd",
+						"type": "DatasetReference"
+					}
+				]
+			}
+		],
+		"folder": {
+			"name": "Raja Puranam - DEV/Anchor Packaging V1 - Dont Touch/Source to Stage/CD"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-01-25T14:21:16Z"
+	}
+}
