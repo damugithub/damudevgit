@@ -1,0 +1,949 @@
+{
+	"name": "PL AAACCEL CT_GL_JOURNALS_F_STG",
+	"properties": {
+		"description": "Pipeline to extract data into CT_GL_JOURNALS_F_STG table in AAACCEL schema.",
+		"activities": [
+			{
+				"name": "CT_GL_JOURNALS_F_STG",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [
+					{
+						"name": "Source",
+						"value": "."
+					},
+					{
+						"name": "Destination",
+						"value": "AAAccel.CT_GL_JOURNALS_F_STG"
+					}
+				],
+				"typeProperties": {
+					"source": {
+						"type": "OracleSource",
+						"oracleReaderQuery": "/*CT_GL_JOURNALS_F_STG*/\r\nSELECT\r\n\tTO_CHAR(L.LEDGER_ID) as LEDGER_ID,\r\n\tTO_CHAR(GCC.CODE_COMBINATION_ID) as GLCC_ID,\r\n\tTO_NUMBER(TO_CHAR(L.EFFECTIVE_DATE,'YYYYMMDD')) as PERIOD_DT,\r\n\tTO_NUMBER(TO_CHAR(L.EFFECTIVE_DATE,'YYYYMMDD')) as ACCOUNTING_DT,\r\n\tTO_NUMBER(TO_CHAR(H.POSTED_DATE,'YYYYMMDD')) as POSTED_DT,\r\n\tGL.NAME as LEDGER_NAME, \r\n\tL.PERIOD_NAME as PERIOD_NAME,\r\n\tGP.PERIOD_YEAR as PERIOD_YEAR,\r\n\tGP.PERIOD_NUM as PERIOD_NUM,\r\n\tGCC.SEGMENT1 as SEGMENT1,\r\n\tGCC.SEGMENT2 as SEGMENT2,\r\n\tGCC.SEGMENT3 as SEGMENT3,\r\n\tGCC.SEGMENT4 as SEGMENT4,\r\n\tGCC.SEGMENT5 as SEGMENT5,\r\n\tGCC.SEGMENT6 as SEGMENT6,\r\n\tGCC.SEGMENT7 as SEGMENT7,\r\n\tGCC.SEGMENT8 as SEGMENT8,\r\n\tGCC.SEGMENT9 as SEGMENT9,\r\n\tGL.CURRENCY_CODE as LEDGER_CURR_CODE, -- Mapped with correct column\r\n\tH.CURRENCY_CODE as TRANS_CURR_CODE, -- NEED TO VERIFY\r\n\tB.NAME as JE_BATCH_NAME,\r\n\tB.STATUS as JE_BATCH_STATUS,\r\n\tL.DESCRIPTION as JE_BATCH_DESC,\r\n\tH.JE_SOURCE as JE_BATCH_SOURCE,\r\n\tH.PERIOD_NAME as JE_BATCH_PERIOD_NAME,\r\n\tH.POSTED_DATE as JE_BATCH_POSTED_DT,\r\n\tB.DEFAULT_EFFECTIVE_DATE as JE_BATCH_ACCOUNTING_DT,\r\n\tB.APPROVAL_STATUS_CODE as JE_BATCH_APPROVAL_STATUS,\r\n\tL.JE_HEADER_ID as JE_HEADER_ID,\r\n\tL.JE_LINE_NUM as JE_LINE_NUM,\r\n\tH.NAME as JE_HEADER_NAME, \r\n\tH.DESCRIPTION as JE_HEADER_DESCRIPTION, -- Mapped with correct column\r\n\tH.JE_SOURCE as JE_HDR_SOURCE,\r\n\tH.JE_CATEGORY as JE_HDR_CATEGORY,\r\n\tH.EXTERNAL_REFERENCE as JE_HDR_SOURCE_REF, -- Mapped with correct column\r\n\tNULL as JE_HDR_REFERENCE,\r\n\tH.STATUS as JE_HDR_STATUS,\r\n\tH.PERIOD_NAME as JE_HDR_PERIOD_NAME,\r\n\tH.POSTED_DATE as JE_HDR_POSTED_DT,\r\n\tH.DEFAULT_EFFECTIVE_DATE as JE_HDR_ACCOUNTING_DT,\r\n\tH.ACTUAL_FLAG as ACTUAL_FLAG,\r\n\tB.STATUS_VERIFIED as STATUS_VERIFIED,\r\n\tL.STATUS as JE_LINE_STATUS, \r\n\tL.DESCRIPTION as JE_LINE_DESCRIPTION, \r\n\tH.PERIOD_NAME as JE_LINE_PERIOD_NAME,\r\n\tL.EFFECTIVE_DATE as JE_LINE_ACCOUNTING_DT,\r\n\tNULL as JE_LINE_CURRENCY_CODE, \r\n\tH.CURRENCY_CONVERSION_RATE as JE_LINE_CONV_RATE,\r\n\tH.CURRENCY_CONVERSION_TYPE as JE_LINE_CONV_TYPE, \r\n\tH.CURRENCY_CONVERSION_DATE as JE_LINE_CONV_DT, \r\n\tL.ENTERED_DR as ENTERED_DR,\r\n\tL.ENTERED_CR as ENTERED_CR,\r\n\tNVL(L.ACCOUNTED_DR,0) as ACCOUNTED_DR,\r\n\tNVL(L.ACCOUNTED_CR,0) as ACCOUNTED_CR,\r\n\tNVL(L.ENTERED_DR,0)*NVL(R.CONVERSION_RATE,1) as ENTERED_DR_USD, -- Updated with conversion logic\r\n\tNVL(L.ENTERED_CR,0)*NVL(R.CONVERSION_RATE,1) as ENTERED_CR_USD, -- Updated with conversion logic\r\n\tNVL(L.ACCOUNTED_DR,0)*NVL(R.CONVERSION_RATE,1) as ACCOUNTED_DR_USD,\r\n\tNVL(L.ACCOUNTED_CR,0)*NVL(R.CONVERSION_RATE,1) as ACCOUNTED_CR_USD,\r\n\tR.CONVERSION_RATE as CONV_RATE_TO_USD,\r\n\tR.CONVERSION_TYPE as CONV_RATE_TYPE,\r\n\tB.ATTRIBUTE1 as ATTRIBUTE1,\r\n\tB.ATTRIBUTE2 as ATTRIBUTE2,\r\n\tB.ATTRIBUTE3 as ATTRIBUTE3,\r\n\tB.ATTRIBUTE4 as ATTRIBUTE4,\r\n\tB.ATTRIBUTE5 as ATTRIBUTE5,\r\n\tB.ATTRIBUTE6 as ATTRIBUTE6,\r\n\tB.ATTRIBUTE7 as ATTRIBUTE7,\r\n\tB.ATTRIBUTE8 as ATTRIBUTE8,\r\n\tB.ATTRIBUTE9 as ATTRIBUTE9,\r\n\tB.ATTRIBUTE10 as ATTRIBUTE10,\r\n\tL.CREATION_DATE as CREATION_DT,\r\n\tL.LAST_UPDATE_DATE as LAST_UPDATE_DT,\r\n\tL.CREATED_BY as CREATED_BY,\r\n\tL.LAST_UPDATED_BY as LAST_UPDATED_BY,\r\n\tL.JE_HEADER_ID|| '~'|| L.JE_LINE_NUM as INTEGRATION_ID,\r\n\t1000 as DATASOURCE_NUM_ID,\r\n\t'Y' as ACTIVE_FLAG,\r\n\t'N' as DELETE_FLAG,\r\n\tCURRENT_DATE as W_INSERT_DT,\r\n\tCURRENT_DATE as W_UPDATE_DT\r\nFROM\r\n\tGL_JE_LINES L,\r\n\tGL_JE_HEADERS H,\r\n\tGL_JE_BATCHES B,\r\n    GL_LEDGERS GL,\r\n\tFND_USER FU,\r\n\tGL_CODE_COMBINATIONS GCC,\r\n\tGL_PERIODS GP,\r\n    GL_DAILY_RATES R\r\nWHERE 1=1\r\n\tAND L.JE_HEADER_ID = H.JE_HEADER_ID\r\n\tAND H.JE_BATCH_ID = B.JE_BATCH_ID\r\n\tAND L.CREATED_BY = FU.USER_ID(+)\r\n\tAND GCC.CODE_COMBINATION_ID = L.CODE_COMBINATION_ID\r\n\tAND GL.LEDGER_ID = H.LEDGER_ID\r\n\tAND L.PERIOD_NAME = GP.PERIOD_NAME\r\n\tAND GP.PERIOD_SET_NAME = B.PERIOD_SET_NAME\r\n\tAND R.FROM_CURRENCY(+) = H.CURRENCY_CODE\r\n\tAND R.TO_CURRENCY(+) = 'USD'\r\n\tAND R.CONVERSION_TYPE(+) = 'Corporate'\r\n\tAND TRUNC(R.CONVERSION_DATE(+)) = TRUNC(H.POSTED_DATE)\r\n\t--AND TO_CHAR(L.LAST_UPDATE_DATE, 'YYYY-MM-DD HH24:MI:SS') >= '2022-01-01'\r\n;",
+						"partitionOption": "None"
+					},
+					"sink": {
+						"type": "AzureSqlSink"
+					},
+					"enableStaging": false,
+					"validateDataConsistency": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "LEDGER_ID",
+									"type": "String"
+								},
+								"sink": {
+									"name": "LEDGER_ID",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "GLCC_ID",
+									"type": "String"
+								},
+								"sink": {
+									"name": "GLCC_ID",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "PERIOD_DT",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "PERIOD_DT",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "ACCOUNTING_DT",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "ACCOUNTING_DT",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "POSTED_DT",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "POSTED_DT",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "LEDGER_NAME",
+									"type": "String"
+								},
+								"sink": {
+									"name": "LEDGER_NAME",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "PERIOD_NAME",
+									"type": "String"
+								},
+								"sink": {
+									"name": "PERIOD_NAME",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "PERIOD_YEAR",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "PERIOD_YEAR",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "PERIOD_NUM",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "PERIOD_NUM",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "SEGMENT1",
+									"type": "String"
+								},
+								"sink": {
+									"name": "SEGMENT1",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "SEGMENT2",
+									"type": "String"
+								},
+								"sink": {
+									"name": "SEGMENT2",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "SEGMENT3",
+									"type": "String"
+								},
+								"sink": {
+									"name": "SEGMENT3",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "SEGMENT4",
+									"type": "String"
+								},
+								"sink": {
+									"name": "SEGMENT4",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "SEGMENT5",
+									"type": "String"
+								},
+								"sink": {
+									"name": "SEGMENT5",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "SEGMENT6",
+									"type": "String"
+								},
+								"sink": {
+									"name": "SEGMENT6",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "SEGMENT7",
+									"type": "String"
+								},
+								"sink": {
+									"name": "SEGMENT7",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "SEGMENT8",
+									"type": "String"
+								},
+								"sink": {
+									"name": "SEGMENT8",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "SEGMENT9",
+									"type": "String"
+								},
+								"sink": {
+									"name": "SEGMENT9",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "LEDGER_CURR_CODE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "LEDGER_CURR_CODE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "TRANS_CURR_CODE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "TRANS_CURR_CODE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "JE_BATCH_NAME",
+									"type": "String"
+								},
+								"sink": {
+									"name": "JE_BATCH_NAME",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "JE_BATCH_STATUS",
+									"type": "String"
+								},
+								"sink": {
+									"name": "JE_BATCH_STATUS",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "JE_BATCH_DESC",
+									"type": "String"
+								},
+								"sink": {
+									"name": "JE_BATCH_DESC",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "JE_BATCH_SOURCE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "JE_BATCH_SOURCE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "JE_BATCH_PERIOD_NAME",
+									"type": "String"
+								},
+								"sink": {
+									"name": "JE_BATCH_PERIOD_NAME",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "JE_BATCH_POSTED_DT",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "JE_BATCH_POSTED_DT",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								}
+							},
+							{
+								"source": {
+									"name": "JE_BATCH_ACCOUNTING_DT",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "JE_BATCH_ACCOUNTING_DT",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								}
+							},
+							{
+								"source": {
+									"name": "JE_BATCH_APPROVAL_STATUS",
+									"type": "String"
+								},
+								"sink": {
+									"name": "JE_BATCH_APPROVAL_STATUS",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "JE_HEADER_ID",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "JE_HEADER_ID",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "JE_LINE_NUM",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "JE_LINE_NUM",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "JE_HEADER_NAME",
+									"type": "String"
+								},
+								"sink": {
+									"name": "JE_HEADER_NAME",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "JE_HEADER_DESCRIPTION",
+									"type": "String"
+								},
+								"sink": {
+									"name": "JE_HEADER_DESCRIPTION",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "JE_HDR_SOURCE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "JE_HDR_SOURCE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "JE_HDR_CATEGORY",
+									"type": "String"
+								},
+								"sink": {
+									"name": "JE_HDR_CATEGORY",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "JE_HDR_SOURCE_REF",
+									"type": "String"
+								},
+								"sink": {
+									"name": "JE_HDR_SOURCE_REF",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "JE_HDR_REFERENCE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "JE_HDR_REFERENCE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "JE_HDR_STATUS",
+									"type": "String"
+								},
+								"sink": {
+									"name": "JE_HDR_STATUS",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "JE_HDR_PERIOD_NAME",
+									"type": "String"
+								},
+								"sink": {
+									"name": "JE_HDR_PERIOD_NAME",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "JE_HDR_POSTED_DT",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "JE_HDR_POSTED_DT",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								}
+							},
+							{
+								"source": {
+									"name": "JE_HDR_ACCOUNTING_DT",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "JE_HDR_ACCOUNTING_DT",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								}
+							},
+							{
+								"source": {
+									"name": "ACTUAL_FLAG",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ACTUAL_FLAG",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "STATUS_VERIFIED",
+									"type": "String"
+								},
+								"sink": {
+									"name": "STATUS_VERIFIED",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "JE_LINE_STATUS",
+									"type": "String"
+								},
+								"sink": {
+									"name": "JE_LINE_STATUS",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "JE_LINE_DESCRIPTION",
+									"type": "String"
+								},
+								"sink": {
+									"name": "JE_LINE_DESCRIPTION",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "JE_LINE_PERIOD_NAME",
+									"type": "String"
+								},
+								"sink": {
+									"name": "JE_LINE_PERIOD_NAME",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "JE_LINE_ACCOUNTING_DT",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "JE_LINE_ACCOUNTING_DT",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								}
+							},
+							{
+								"source": {
+									"name": "JE_LINE_CURRENCY_CODE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "JE_LINE_CURRENCY_CODE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "JE_LINE_CONV_RATE",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "JE_LINE_CONV_RATE",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "JE_LINE_CONV_TYPE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "JE_LINE_CONV_TYPE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "JE_LINE_CONV_DT",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "JE_LINE_CONV_DT",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								}
+							},
+							{
+								"source": {
+									"name": "ENTERED_DR",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "ENTERED_DR",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "ENTERED_CR",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "ENTERED_CR",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "ACCOUNTED_DR",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "ACCOUNTED_DR",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "ACCOUNTED_CR",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "ACCOUNTED_CR",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "ENTERED_DR_USD",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "ENTERED_DR_USD",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "ENTERED_CR_USD",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "ENTERED_CR_USD",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "CONV_RATE_TO_USD",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "CONV_RATE_TO_USD",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "CONV_RATE_TYPE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "CONV_RATE_TYPE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE1",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE1",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE2",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE2",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE3",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE3",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE4",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE4",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE5",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE5",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE6",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE6",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE7",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE7",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE8",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE8",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE9",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE9",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ATTRIBUTE10",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ATTRIBUTE10",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "CREATION_DT",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "CREATION_DT",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								}
+							},
+							{
+								"source": {
+									"name": "LAST_UPDATE_DT",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "LAST_UPDATE_DT",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								}
+							},
+							{
+								"source": {
+									"name": "CREATED_BY",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "CREATED_BY",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "LAST_UPDATED_BY",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "LAST_UPDATED_BY",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "INTEGRATION_ID",
+									"type": "String"
+								},
+								"sink": {
+									"name": "INTEGRATION_ID",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "DATASOURCE_NUM_ID",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "DATASOURCE_NUM_ID",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "ACTIVE_FLAG",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ACTIVE_FLAG",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "DELETE_FLAG",
+									"type": "String"
+								},
+								"sink": {
+									"name": "DELETE_FLAG",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "W_INSERT_DT",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "W_INSERT_DT",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								}
+							},
+							{
+								"source": {
+									"name": "W_UPDATE_DT",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "W_UPDATE_DT",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								}
+							},
+							{
+								"source": {
+									"name": "ACCOUNTED_CR_USD",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "ACCOUNTED_CR_USD",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "ACCOUNTED_DR_USD",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "ACCOUNTED_DR_USD",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							}
+						],
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "SourceDataset_eah",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DestinationDataset_eah",
+						"type": "DatasetReference"
+					}
+				]
+			}
+		],
+		"folder": {
+			"name": "Raja Puranam - DEV/Anchor Packaging V1 - Dont Touch/Source to Stage/GL"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-01-25T14:20:32Z"
+	}
+}

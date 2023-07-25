@@ -1,0 +1,497 @@
+{
+	"name": "DestinationDataset_eah",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureSqlDatabase1",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "LEDGER_ID",
+				"type": "nvarchar",
+				"precision": 0,
+				"scale": 0
+			},
+			{
+				"name": "GLCC_ID",
+				"type": "nvarchar",
+				"precision": 0,
+				"scale": 0
+			},
+			{
+				"name": "PERIOD_DT",
+				"type": "numeric",
+				"precision": 18,
+				"scale": 0
+			},
+			{
+				"name": "ACCOUNTING_DT",
+				"type": "numeric",
+				"precision": 18,
+				"scale": 0
+			},
+			{
+				"name": "POSTED_DT",
+				"type": "numeric",
+				"precision": 18,
+				"scale": 0
+			},
+			{
+				"name": "LEDGER_NAME",
+				"type": "nvarchar",
+				"precision": 0,
+				"scale": 0
+			},
+			{
+				"name": "PERIOD_NAME",
+				"type": "nvarchar",
+				"precision": 0,
+				"scale": 0
+			},
+			{
+				"name": "PERIOD_YEAR",
+				"type": "numeric",
+				"precision": 15,
+				"scale": 0
+			},
+			{
+				"name": "PERIOD_NUM",
+				"type": "numeric",
+				"precision": 15,
+				"scale": 0
+			},
+			{
+				"name": "SEGMENT1",
+				"type": "nvarchar",
+				"precision": 0,
+				"scale": 0
+			},
+			{
+				"name": "SEGMENT2",
+				"type": "nvarchar",
+				"precision": 0,
+				"scale": 0
+			},
+			{
+				"name": "SEGMENT3",
+				"type": "nvarchar",
+				"precision": 0,
+				"scale": 0
+			},
+			{
+				"name": "SEGMENT4",
+				"type": "nvarchar",
+				"precision": 0,
+				"scale": 0
+			},
+			{
+				"name": "SEGMENT5",
+				"type": "nvarchar",
+				"precision": 0,
+				"scale": 0
+			},
+			{
+				"name": "SEGMENT6",
+				"type": "nvarchar",
+				"precision": 0,
+				"scale": 0
+			},
+			{
+				"name": "SEGMENT7",
+				"type": "nvarchar",
+				"precision": 0,
+				"scale": 0
+			},
+			{
+				"name": "SEGMENT8",
+				"type": "nvarchar",
+				"precision": 0,
+				"scale": 0
+			},
+			{
+				"name": "SEGMENT9",
+				"type": "nvarchar",
+				"precision": 0,
+				"scale": 0
+			},
+			{
+				"name": "LEDGER_CURR_CODE",
+				"type": "nvarchar",
+				"precision": 0,
+				"scale": 0
+			},
+			{
+				"name": "TRANS_CURR_CODE",
+				"type": "nvarchar",
+				"precision": 0,
+				"scale": 0
+			},
+			{
+				"name": "JE_BATCH_NAME",
+				"type": "nvarchar",
+				"precision": 0,
+				"scale": 0
+			},
+			{
+				"name": "JE_BATCH_STATUS",
+				"type": "nvarchar",
+				"precision": 0,
+				"scale": 0
+			},
+			{
+				"name": "JE_BATCH_DESC",
+				"type": "nvarchar",
+				"precision": 0,
+				"scale": 0
+			},
+			{
+				"name": "JE_BATCH_SOURCE",
+				"type": "nvarchar",
+				"precision": 0,
+				"scale": 0
+			},
+			{
+				"name": "JE_BATCH_PERIOD_NAME",
+				"type": "nvarchar",
+				"precision": 0,
+				"scale": 0
+			},
+			{
+				"name": "JE_BATCH_POSTED_DT",
+				"type": "datetime2",
+				"precision": 27,
+				"scale": 7
+			},
+			{
+				"name": "JE_BATCH_ACCOUNTING_DT",
+				"type": "datetime2",
+				"precision": 27,
+				"scale": 7
+			},
+			{
+				"name": "JE_BATCH_APPROVAL_STATUS",
+				"type": "nvarchar",
+				"precision": 0,
+				"scale": 0
+			},
+			{
+				"name": "JE_HEADER_ID",
+				"type": "numeric",
+				"precision": 15,
+				"scale": 0
+			},
+			{
+				"name": "JE_LINE_NUM",
+				"type": "numeric",
+				"precision": 15,
+				"scale": 0
+			},
+			{
+				"name": "JE_HEADER_NAME",
+				"type": "nvarchar",
+				"precision": 0,
+				"scale": 0
+			},
+			{
+				"name": "JE_HEADER_DESCRIPTION",
+				"type": "nvarchar",
+				"precision": 0,
+				"scale": 0
+			},
+			{
+				"name": "JE_HDR_SOURCE",
+				"type": "nvarchar",
+				"precision": 0,
+				"scale": 0
+			},
+			{
+				"name": "JE_HDR_CATEGORY",
+				"type": "nvarchar",
+				"precision": 0,
+				"scale": 0
+			},
+			{
+				"name": "JE_HDR_SOURCE_REF",
+				"type": "nvarchar",
+				"precision": 0,
+				"scale": 0
+			},
+			{
+				"name": "JE_HDR_REFERENCE",
+				"type": "nvarchar",
+				"precision": 0,
+				"scale": 0
+			},
+			{
+				"name": "JE_HDR_STATUS",
+				"type": "nvarchar",
+				"precision": 0,
+				"scale": 0
+			},
+			{
+				"name": "JE_HDR_PERIOD_NAME",
+				"type": "nvarchar",
+				"precision": 0,
+				"scale": 0
+			},
+			{
+				"name": "JE_HDR_POSTED_DT",
+				"type": "datetime2",
+				"precision": 27,
+				"scale": 7
+			},
+			{
+				"name": "JE_HDR_ACCOUNTING_DT",
+				"type": "datetime2",
+				"precision": 27,
+				"scale": 7
+			},
+			{
+				"name": "ACTUAL_FLAG",
+				"type": "nvarchar",
+				"precision": 0,
+				"scale": 0
+			},
+			{
+				"name": "STATUS_VERIFIED",
+				"type": "nvarchar",
+				"precision": 0,
+				"scale": 0
+			},
+			{
+				"name": "JE_LINE_STATUS",
+				"type": "nvarchar",
+				"precision": 0,
+				"scale": 0
+			},
+			{
+				"name": "JE_LINE_DESCRIPTION",
+				"type": "nvarchar",
+				"precision": 0,
+				"scale": 0
+			},
+			{
+				"name": "JE_LINE_PERIOD_NAME",
+				"type": "nvarchar",
+				"precision": 0,
+				"scale": 0
+			},
+			{
+				"name": "JE_LINE_ACCOUNTING_DT",
+				"type": "datetime2",
+				"precision": 27,
+				"scale": 7
+			},
+			{
+				"name": "JE_LINE_CURRENCY_CODE",
+				"type": "nvarchar",
+				"precision": 0,
+				"scale": 0
+			},
+			{
+				"name": "JE_LINE_CONV_RATE",
+				"type": "numeric",
+				"precision": 18,
+				"scale": 0
+			},
+			{
+				"name": "JE_LINE_CONV_TYPE",
+				"type": "nvarchar",
+				"precision": 0,
+				"scale": 0
+			},
+			{
+				"name": "JE_LINE_CONV_DT",
+				"type": "datetime2",
+				"precision": 27,
+				"scale": 7
+			},
+			{
+				"name": "ENTERED_DR",
+				"type": "numeric",
+				"precision": 18,
+				"scale": 0
+			},
+			{
+				"name": "ENTERED_CR",
+				"type": "numeric",
+				"precision": 18,
+				"scale": 0
+			},
+			{
+				"name": "ACCOUNTED_DR",
+				"type": "numeric",
+				"precision": 18,
+				"scale": 0
+			},
+			{
+				"name": "ACCOUNTED_CR",
+				"type": "numeric",
+				"precision": 18,
+				"scale": 0
+			},
+			{
+				"name": "ENTERED_DR_USD",
+				"type": "numeric",
+				"precision": 18,
+				"scale": 0
+			},
+			{
+				"name": "ENTERED_CR_USD",
+				"type": "numeric",
+				"precision": 18,
+				"scale": 0
+			},
+			{
+				"name": "CONV_RATE_TO_USD",
+				"type": "numeric",
+				"precision": 18,
+				"scale": 0
+			},
+			{
+				"name": "CONV_RATE_TYPE",
+				"type": "nvarchar",
+				"precision": 0,
+				"scale": 0
+			},
+			{
+				"name": "ATTRIBUTE1",
+				"type": "nvarchar",
+				"precision": 0,
+				"scale": 0
+			},
+			{
+				"name": "ATTRIBUTE2",
+				"type": "nvarchar",
+				"precision": 0,
+				"scale": 0
+			},
+			{
+				"name": "ATTRIBUTE3",
+				"type": "nvarchar",
+				"precision": 0,
+				"scale": 0
+			},
+			{
+				"name": "ATTRIBUTE4",
+				"type": "nvarchar",
+				"precision": 0,
+				"scale": 0
+			},
+			{
+				"name": "ATTRIBUTE5",
+				"type": "nvarchar",
+				"precision": 0,
+				"scale": 0
+			},
+			{
+				"name": "ATTRIBUTE6",
+				"type": "nvarchar",
+				"precision": 0,
+				"scale": 0
+			},
+			{
+				"name": "ATTRIBUTE7",
+				"type": "nvarchar",
+				"precision": 0,
+				"scale": 0
+			},
+			{
+				"name": "ATTRIBUTE8",
+				"type": "nvarchar",
+				"precision": 0,
+				"scale": 0
+			},
+			{
+				"name": "ATTRIBUTE9",
+				"type": "nvarchar",
+				"precision": 0,
+				"scale": 0
+			},
+			{
+				"name": "ATTRIBUTE10",
+				"type": "nvarchar",
+				"precision": 0,
+				"scale": 0
+			},
+			{
+				"name": "CREATION_DT",
+				"type": "datetime2",
+				"precision": 27,
+				"scale": 7
+			},
+			{
+				"name": "LAST_UPDATE_DT",
+				"type": "datetime2",
+				"precision": 27,
+				"scale": 7
+			},
+			{
+				"name": "CREATED_BY",
+				"type": "numeric",
+				"precision": 15,
+				"scale": 0
+			},
+			{
+				"name": "LAST_UPDATED_BY",
+				"type": "numeric",
+				"precision": 15,
+				"scale": 0
+			},
+			{
+				"name": "INTEGRATION_ID",
+				"type": "nvarchar",
+				"precision": 0,
+				"scale": 0
+			},
+			{
+				"name": "DATASOURCE_NUM_ID",
+				"type": "numeric",
+				"precision": 18,
+				"scale": 0
+			},
+			{
+				"name": "ACTIVE_FLAG",
+				"type": "nvarchar",
+				"precision": 0,
+				"scale": 0
+			},
+			{
+				"name": "DELETE_FLAG",
+				"type": "nvarchar",
+				"precision": 0,
+				"scale": 0
+			},
+			{
+				"name": "W_INSERT_DT",
+				"type": "datetime2",
+				"precision": 27,
+				"scale": 7
+			},
+			{
+				"name": "W_UPDATE_DT",
+				"type": "datetime2",
+				"precision": 27,
+				"scale": 7
+			},
+			{
+				"name": "ACCOUNTED_CR_USD",
+				"type": "numeric",
+				"precision": 18,
+				"scale": 0
+			},
+			{
+				"name": "ACCOUNTED_DR_USD",
+				"type": "numeric",
+				"precision": 18,
+				"scale": 0
+			}
+		],
+		"typeProperties": {
+			"schema": "AAAccel",
+			"table": "CT_GL_JOURNALS_F_STG"
+		}
+	}
+}

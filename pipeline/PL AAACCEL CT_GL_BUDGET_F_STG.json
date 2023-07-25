@@ -1,0 +1,421 @@
+{
+	"name": "PL AAACCEL CT_GL_BUDGET_F_STG",
+	"properties": {
+		"description": "Pipeline to extract data into CT_GL_BUDGET_F_STG table in AAACCEL schema.",
+		"activities": [
+			{
+				"name": "CT_GL_BUDGET_F_STG",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [
+					{
+						"name": "Source",
+						"value": "."
+					},
+					{
+						"name": "Destination",
+						"value": "AAAccel.CT_GL_BUDGET_F_STG"
+					}
+				],
+				"typeProperties": {
+					"source": {
+						"type": "OracleSource",
+						"oracleReaderQuery": "/*CT_GL_BUDGET_F_STG*/\r\nSELECT \r\n    TO_CHAR(NVL(gb.ledger_id,0)) ledger_id,\r\n    TO_CHAR(NVL(gb.code_combination_id,0)) glcc_id,\r\n    GP.PERIOD_NAME||'~'||GP.PERIOD_SET_NAME as PERIOD_ID,\r\n    TO_NUMBER(TO_CHAR(GP.END_DATE,'YYYYMMDD')) BUDGET_MONTH_ID,\r\n    GP.PERIOD_NAME BUDGET_MONTH,\r\n    gbv.budget_name,\r\n    gle.NAME LEDGER_NAME,\r\n    gb.currency_code,\r\n    gcc.segment1, \r\n    gcc.segment2, \r\n    gcc.segment3,\r\n    gcc.segment4,\r\n    gcc.segment5,\r\n    gcc.segment6,\r\n    gcc.segment7,\r\n    gcc.segment8,\r\n    NVL(gb.PERIOD_NET_DR,0) PERIOD_NET_DR,\r\n    NVL(gb.PERIOD_NET_CR,0) PERIOD_NET_CR,\r\n    NVL(gb.PERIOD_NET_DR,0) - NVL(gb.PERIOD_NET_CR,0) AMOUNT,\r\n    gbv.CREATION_DATE CREATION_DT,\r\n    gbv.LAST_UPDATE_DATE LAST_UPDATE_DT,\r\n    gbv.CREATED_BY,\r\n    gbv.LAST_UPDATED_BY,\r\n    gbv.budget_type TYPE,\r\n    NULL scenario,\r\n    gbv.version_num VERSION,\r\n    gle.currency_code CURRENCY,\r\n    NULL MGMT_REPORTING_LINE,\r\n    NULL VEW,\r\n    NULL DATA_LOAD_CUBE_NAME,\r\n    TO_CHAR(gb.ledger_id)||'~'||TO_CHAR(gb.code_combination_id)||'~'||gbv.budget_name||'~'||GB.PERIOD_NAME||'~'||gb.currency_code INTEGRATION_ID,\r\n    1000 DATASOURCE_NUM_ID\r\nFROM gl_balances gb,\r\n    gl_code_combinations gcc,\r\n    gl_ledgers gle,\r\n    gl_budget_versions gbv,\r\n    GL_PERIODS GP\r\nWHERE 1=1\r\n    AND GB.PERIOD_NAME = GP.PERIOD_NAME\r\n    AND GB.PERIOD_TYPE = GP.PERIOD_TYPE\r\n    AND GP.PERIOD_SET_NAME = GLE.PERIOD_SET_NAME\r\n    AND gb.code_combination_id = gcc.code_combination_id\r\n    AND gle.ledger_id = gb.ledger_id\r\n    AND gb.actual_flag = 'B'\r\n    AND gbv.budget_version_id = gb.budget_version_id\r\n   -- AND TO_CHAR(gbv.LAST_UPDATE_DATE, 'YYYY-MM-DD HH24:MI:SS') >= '2022-01-01'\r\n;",
+						"partitionOption": "None"
+					},
+					"sink": {
+						"type": "AzureSqlSink"
+					},
+					"enableStaging": false,
+					"validateDataConsistency": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "LEDGER_ID",
+									"type": "String"
+								},
+								"sink": {
+									"name": "LEDGER_ID",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "GLCC_ID",
+									"type": "String"
+								},
+								"sink": {
+									"name": "GLCC_ID",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "PERIOD_ID",
+									"type": "String"
+								},
+								"sink": {
+									"name": "PERIOD_ID",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "BUDGET_MONTH_ID",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "BUDGET_MONTH_ID",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "BUDGET_MONTH",
+									"type": "String"
+								},
+								"sink": {
+									"name": "BUDGET_MONTH",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "BUDGET_NAME",
+									"type": "String"
+								},
+								"sink": {
+									"name": "BUDGET_NAME",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "LEDGER_NAME",
+									"type": "String"
+								},
+								"sink": {
+									"name": "LEDGER_NAME",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "CURRENCY_CODE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "CURRENCY_CODE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "SEGMENT1",
+									"type": "String"
+								},
+								"sink": {
+									"name": "SEGMENT1",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "SEGMENT2",
+									"type": "String"
+								},
+								"sink": {
+									"name": "SEGMENT2",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "SEGMENT3",
+									"type": "String"
+								},
+								"sink": {
+									"name": "SEGMENT3",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "SEGMENT4",
+									"type": "String"
+								},
+								"sink": {
+									"name": "SEGMENT4",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "SEGMENT5",
+									"type": "String"
+								},
+								"sink": {
+									"name": "SEGMENT5",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "SEGMENT6",
+									"type": "String"
+								},
+								"sink": {
+									"name": "SEGMENT6",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "SEGMENT7",
+									"type": "String"
+								},
+								"sink": {
+									"name": "SEGMENT7",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "SEGMENT8",
+									"type": "String"
+								},
+								"sink": {
+									"name": "SEGMENT8",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "PERIOD_NET_DR",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "PERIOD_NET_DR",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "PERIOD_NET_CR",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "PERIOD_NET_CR",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "AMOUNT",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "AMOUNT",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							},
+							{
+								"source": {
+									"name": "CREATION_DT",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "CREATION_DT",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								}
+							},
+							{
+								"source": {
+									"name": "LAST_UPDATE_DT",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "LAST_UPDATE_DT",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								}
+							},
+							{
+								"source": {
+									"name": "CREATED_BY",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "CREATED_BY",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "LAST_UPDATED_BY",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "LAST_UPDATED_BY",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "TYPE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "TYPE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "SCENARIO",
+									"type": "String"
+								},
+								"sink": {
+									"name": "SCENARIO",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "VERSION",
+									"type": "String"
+								},
+								"sink": {
+									"name": "VERSION",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "CURRENCY",
+									"type": "String"
+								},
+								"sink": {
+									"name": "CURRENCY",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "MGMT_REPORTING_LINE",
+									"type": "String"
+								},
+								"sink": {
+									"name": "MGMT_REPORTING_LINE",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "VEW",
+									"type": "String"
+								},
+								"sink": {
+									"name": "VEW",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "DATA_LOAD_CUBE_NAME",
+									"type": "String"
+								},
+								"sink": {
+									"name": "DATA_LOAD_CUBE_NAME",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "INTEGRATION_ID",
+									"type": "String"
+								},
+								"sink": {
+									"name": "INTEGRATION_ID",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "DATASOURCE_NUM_ID",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "DATASOURCE_NUM_ID",
+									"type": "Decimal",
+									"physicalType": "numeric"
+								}
+							}
+						],
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "SourceDataset_715",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DestinationDataset_715",
+						"type": "DatasetReference"
+					}
+				]
+			}
+		],
+		"folder": {
+			"name": "Raja Puranam - DEV/Anchor Packaging V1 - Dont Touch/Source to Stage/GL"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-01-25T14:20:21Z"
+	}
+}
