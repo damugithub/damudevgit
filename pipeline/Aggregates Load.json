@@ -1,0 +1,47 @@
+{
+	"name": "Aggregates Load",
+	"properties": {
+		"activities": [
+			{
+				"name": "PL AAACCEL CT_AP_AGING_A",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL AAACCEL CT_AP_AGING_A",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "PL AAACCEL CT_AR_AGING_A",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "PL AAACCEL CT_AP_AGING_A",
+						"dependencyConditions": [
+							"Succeeded",
+							"Failed",
+							"Skipped"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL AAACCEL CT_AR_AGING_A",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			}
+		],
+		"folder": {
+			"name": "Raja Puranam - DEV/Anchor Packaging V1 - Dont Touch/Stage to Target"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-01-25T14:16:09Z"
+	}
+}

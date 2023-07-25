@@ -1,0 +1,32 @@
+{
+	"name": "PL AAACCEL CT_AR_AGING_A",
+	"properties": {
+		"activities": [
+			{
+				"name": "CT_AR_AGING_A",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[AAAccel].[PROC_CT_AR_AGING_A]"
+				},
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase1",
+					"type": "LinkedServiceReference"
+				}
+			}
+		],
+		"folder": {
+			"name": "Raja Puranam - DEV/Anchor Packaging V1 - Dont Touch/Stage to Target/AR"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-01-25T13:28:58Z"
+	}
+}
