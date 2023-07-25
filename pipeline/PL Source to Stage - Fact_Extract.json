@@ -1,0 +1,513 @@
+{
+	"name": "PL Source to Stage - Fact_Extract",
+	"properties": {
+		"activities": [
+			{
+				"name": "LKP_TaskControl_SourceToStage_Records",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderQuery": {
+							"value": "Select\t* \nFrom\tUCM.CT_ETL_task_control_G \nWhere\tTask_Phase  = 'Fact_Extract' AND\n(\nModule_Name = '@{pipeline().parameters.ModuleName}' OR\n'@{pipeline().parameters.ModuleName}' = 'All'\n)",
+							"type": "Expression"
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "DS_UCM_SQL_AzureSQL_DBTables",
+						"type": "DatasetReference"
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "ForEach_Looping_SourceToStage_Records",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "LKP_TaskControl_SourceToStage_Records",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('LKP_TaskControl_SourceToStage_Records').output.value",
+						"type": "Expression"
+					},
+					"isSequential": true,
+					"activities": [
+						{
+							"name": "LKP_Get_Last_Successful_Start_Timestamp",
+							"type": "Lookup",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "AzureSqlSource",
+									"sqlReaderQuery": {
+										"value": "Select Last_Successful_Start_Timestamp AS Last_Successful_Start_Timestamp\nFrom UCM.CT_ETL_task_control_G\nWhere Target = '@{item().Target}'",
+										"type": "Expression"
+									},
+									"queryTimeout": "02:00:00",
+									"partitionOption": "None"
+								},
+								"dataset": {
+									"referenceName": "DS_UCM_SQL_AzureSQL_DBTables",
+									"type": "DatasetReference"
+								}
+							}
+						},
+						{
+							"name": "LKP_Get_Task_Start_Timestamp",
+							"type": "Lookup",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "AzureSqlSource",
+									"sqlReaderQuery": "Select DATEADD(MI, 330, GETDATE()) AS Task_Start_TimeStamp",
+									"queryTimeout": "02:00:00",
+									"partitionOption": "None"
+								},
+								"dataset": {
+									"referenceName": "DS_UCM_SQL_AzureSQL_DBTables",
+									"type": "DatasetReference"
+								}
+							}
+						},
+						{
+							"name": "CopyData_Source_to_Stage",
+							"type": "Copy",
+							"dependsOn": [
+								{
+									"activity": "LKP_Get_Last_Successful_Start_Timestamp",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								},
+								{
+									"activity": "LKP_Get_Task_Start_Timestamp",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "AzureSqlSource",
+									"sqlReaderQuery": {
+										"value": "@{replace(\nitem().SQL_Text, \n'$$LAST_EXTRACT_DATE$$',\nformatDateTime(item().Last_Successful_Start_Timestamp, 'yyyy-MM-dd HH:mm:ss')\n)}",
+										"type": "Expression"
+									},
+									"queryTimeout": "02:00:00",
+									"partitionOption": "None"
+								},
+								"sink": {
+									"type": "AzureSqlSink",
+									"preCopyScript": {
+										"value": "@{concat('Truncate Table ',item().Target)}",
+										"type": "Expression"
+									},
+									"writeBehavior": "insert",
+									"sqlWriterUseTableLock": false,
+									"disableMetricsCollection": true
+								},
+								"enableStaging": false,
+								"translator": {
+									"type": "TabularTranslator",
+									"typeConversion": true,
+									"typeConversionSettings": {
+										"allowDataTruncation": true,
+										"treatBooleanAsNumber": false
+									}
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "DS_UCM_SQL_AzureSQL_DBTables",
+									"type": "DatasetReference"
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "DS_UCM_SQL_AzureSQL_StagingTables",
+									"type": "DatasetReference",
+									"parameters": {
+										"StagingTableName": {
+											"value": "@replace(item().Target,'UCM.','')\n\n",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						},
+						{
+							"name": "PL Fact Stage Duplicate Check",
+							"type": "ExecutePipeline",
+							"dependsOn": [
+								{
+									"activity": "CopyData_Source_to_Stage",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "PL Fact Stage Duplicate Check - Fact_Load",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"TaskPhase": "Fact_Extract",
+									"StgTableName": {
+										"value": "@{item().Target}",
+										"type": "Expression"
+									}
+								}
+							}
+						},
+						{
+							"name": "Capturing_Error_Message",
+							"type": "SetVariable",
+							"dependsOn": [
+								{
+									"activity": "CopyData_Source_to_Stage",
+									"dependencyConditions": [
+										"Failed",
+										"Skipped"
+									]
+								}
+							],
+							"policy": {
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "errorMessage",
+								"value": {
+									"value": "@concat(\nactivity('LKP_Get_Last_Successful_Start_Timestamp')?.Error?.message,'|',\nactivity('LKP_Get_Task_Start_Timestamp')?.Error?.message,'|',\nactivity('CopyData_Source_to_Stage')?.Error?.message\n)",
+									"type": "Expression"
+								}
+							}
+						},
+						{
+							"name": "SP_TaskControl_Update",
+							"type": "SqlServerStoredProcedure",
+							"dependsOn": [
+								{
+									"activity": "PL Fact Stage Duplicate Check",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"storedProcedureName": "[UCM].[usp_CT_ETL_task_control_G_Update]",
+								"storedProcedureParameters": {
+									"TargetTableName": {
+										"value": {
+											"value": "@{item().Target}",
+											"type": "Expression"
+										},
+										"type": "String"
+									},
+									"TaskStartTimeStamp": {
+										"value": {
+											"value": "@activity('LKP_Get_Task_Start_Timestamp').output.firstRow.Task_Start_TimeStamp",
+											"type": "Expression"
+										},
+										"type": "String"
+									}
+								}
+							},
+							"linkedServiceName": {
+								"referenceName": "AzureSqlDatabase1",
+								"type": "LinkedServiceReference"
+							}
+						},
+						{
+							"name": "SP_TaskRunLog_Failures_Insert",
+							"type": "SqlServerStoredProcedure",
+							"dependsOn": [
+								{
+									"activity": "Capturing_Error_Message",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"storedProcedureName": "[UCM].[usp_CT_ETL_Task_run_log_G_Failure_Update]",
+								"storedProcedureParameters": {
+									"ErrorMessage": {
+										"value": {
+											"value": "@variables('errorMessage')",
+											"type": "Expression"
+										},
+										"type": "String"
+									},
+									"ETLRunNumber": {
+										"value": "0",
+										"type": "Int32"
+									},
+									"ModuleName": {
+										"value": {
+											"value": "@{item().Module_Name}",
+											"type": "Expression"
+										},
+										"type": "String"
+									},
+									"NoOfRowsDelete": {
+										"value": "0",
+										"type": "Int32"
+									},
+									"NoOfRowsInserted": {
+										"value": "0",
+										"type": "Int32"
+									},
+									"NoOfRowsUpdated": {
+										"value": "0",
+										"type": "Int32"
+									},
+									"PipilineName": {
+										"value": {
+											"value": "@{pipeline().Pipeline}",
+											"type": "Expression"
+										},
+										"type": "String"
+									},
+									"RunID": {
+										"value": {
+											"value": "@{pipeline().RunId}",
+											"type": "Expression"
+										},
+										"type": "String"
+									},
+									"Status": {
+										"value": "Failed",
+										"type": "String"
+									},
+									"TargetTableName": {
+										"value": {
+											"value": "@{item().Target}",
+											"type": "Expression"
+										},
+										"type": "String"
+									},
+									"TaskKey": {
+										"value": {
+											"value": "@item().Task_Key",
+											"type": "Expression"
+										},
+										"type": "Int32"
+									},
+									"TaskName": {
+										"value": {
+											"value": "@{item().Task_Name}",
+											"type": "Expression"
+										},
+										"type": "String"
+									},
+									"TaskStartTimeStamp": {
+										"value": {
+											"value": "@{activity('LKP_Get_Task_Start_Timestamp').output.firstRow.Task_Start_TimeStamp}",
+											"type": "Expression"
+										},
+										"type": "String"
+									}
+								}
+							},
+							"linkedServiceName": {
+								"referenceName": "AzureSqlDatabase1",
+								"type": "LinkedServiceReference"
+							}
+						},
+						{
+							"name": "SP_TaskRunLog_Success_Insert",
+							"type": "SqlServerStoredProcedure",
+							"dependsOn": [
+								{
+									"activity": "SP_TaskControl_Update",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"storedProcedureName": "[UCM].[usp_CT_ETL_Task_run_log_G_Success_Update]",
+								"storedProcedureParameters": {
+									"ETLRunNumber": {
+										"value": "0",
+										"type": "Int32"
+									},
+									"ModuleName": {
+										"value": {
+											"value": "@{item().Module_Name}",
+											"type": "Expression"
+										},
+										"type": "String"
+									},
+									"NoOfRowsDelete": {
+										"value": "0",
+										"type": "Int32"
+									},
+									"NoOfRowsInserted": {
+										"value": {
+											"value": "@activity('CopyData_Source_to_Stage').output.rowsCopied",
+											"type": "Expression"
+										},
+										"type": "Int32"
+									},
+									"NoOfRowsUpdated": {
+										"value": "0",
+										"type": "Int32"
+									},
+									"PipilineName": {
+										"value": {
+											"value": "@{pipeline().Pipeline}",
+											"type": "Expression"
+										},
+										"type": "String"
+									},
+									"RunID": {
+										"value": {
+											"value": "@{pipeline().parameters.RunID}",
+											"type": "Expression"
+										},
+										"type": "String"
+									},
+									"Status": {
+										"value": {
+											"value": "@{activity('CopyData_Source_to_Stage').output.executionDetails[0].status}",
+											"type": "Expression"
+										},
+										"type": "String"
+									},
+									"TargetTableName": {
+										"value": {
+											"value": "@{item().Target}",
+											"type": "Expression"
+										},
+										"type": "String"
+									},
+									"TaskKey": {
+										"value": {
+											"value": "@item().Task_Key",
+											"type": "Expression"
+										},
+										"type": "Int32"
+									},
+									"TaskName": {
+										"value": {
+											"value": "@{item().Task_Name}",
+											"type": "Expression"
+										},
+										"type": "String"
+									},
+									"TaskStartTimeStamp": {
+										"value": {
+											"value": "@{activity('LKP_Get_Task_Start_Timestamp').output.firstRow.Task_Start_TimeStamp}",
+											"type": "Expression"
+										},
+										"type": "String"
+									}
+								}
+							},
+							"linkedServiceName": {
+								"referenceName": "AzureSqlDatabase1",
+								"type": "LinkedServiceReference"
+							}
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"RunID": {
+				"type": "string"
+			},
+			"ModuleName": {
+				"type": "string"
+			},
+			"TaskPhase": {
+				"type": "string"
+			},
+			"StageTableName": {
+				"type": "string"
+			}
+		},
+		"variables": {
+			"errorMessage": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "OracleUCM_to_Azure_Pipelines"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-01-25T15:04:49Z"
+	}
+}

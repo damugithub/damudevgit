@@ -1,0 +1,123 @@
+{
+	"name": "PL Fact Stage Duplicate Check - Fact_Load",
+	"properties": {
+		"activities": [
+			{
+				"name": "Lookup_StgTables_Duplicate_Records_Count",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderStoredProcedureName": "[UCM].[usp_CT_ETL_Task_Table_Duplicates_Check]",
+						"storedProcedureParameters": {
+							"StgTable": {
+								"type": "String",
+								"value": {
+									"value": "@{pipeline().parameters.StgTableName}",
+									"type": "Expression"
+								}
+							},
+							"TaskPhase": {
+								"type": "String",
+								"value": {
+									"value": "@{pipeline().parameters.TaskPhase}",
+									"type": "Expression"
+								}
+							}
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "DS_UCM_SQL_AzureSQL_DBTables",
+						"type": "DatasetReference"
+					}
+				}
+			},
+			{
+				"name": "IF_Duplicate_Count_Check",
+				"type": "IfCondition",
+				"dependsOn": [
+					{
+						"activity": "Lookup_StgTables_Duplicate_Records_Count",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@equals(activity('Lookup_StgTables_Duplicate_Records_Count').output.firstRow.output_result,'No Duplicates')",
+						"type": "Expression"
+					},
+					"ifFalseActivities": [
+						{
+							"name": "Var_DupsInfo",
+							"type": "SetVariable",
+							"dependsOn": [],
+							"policy": {
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "emailBody",
+								"value": {
+									"value": "@{activity('Lookup_StgTables_Duplicate_Records_Count').output.firstRow.output_result}",
+									"type": "Expression"
+								}
+							}
+						}
+					],
+					"ifTrueActivities": [
+						{
+							"name": "Var_NoDups",
+							"type": "SetVariable",
+							"dependsOn": [],
+							"policy": {
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "TrueVar",
+								"value": "No Duplicates"
+							}
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"TaskPhase": {
+				"type": "string"
+			},
+			"StgTableName": {
+				"type": "string"
+			}
+		},
+		"variables": {
+			"emailBody": {
+				"type": "String"
+			},
+			"TrueVar": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "OracleUCM_to_Azure_Pipelines"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-01-25T14:21:35Z"
+	}
+}

@@ -1,0 +1,24 @@
+{
+	"name": "DS_UCM_SQL_AzureSQL_StagingTables",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureSqlDatabase1",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"StagingTableName": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [],
+		"typeProperties": {
+			"schema": "ucm",
+			"table": {
+				"value": "@dataset().StagingTableName",
+				"type": "Expression"
+			}
+		}
+	}
+}

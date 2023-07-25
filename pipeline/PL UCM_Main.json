@@ -1,0 +1,314 @@
+{
+	"name": "PL UCM_Main",
+	"properties": {
+		"activities": [
+			{
+				"name": "LKP_Get_ETLRun_StartTimeStamp",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderQuery": "SELECT DATEADD(MI, 330, GETDATE()) AS ETL_Run_Start_TimeStamp",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "DS_UCM_SQL_AzureSQL_DBTables",
+						"type": "DatasetReference"
+					}
+				}
+			},
+			{
+				"name": "Pipeline_Dim_Extract",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "LKP_Get_ETLRun_StartTimeStamp",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL Source to Stage -Dim_Extract",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"RunID": {
+							"value": "@{pipeline().RunId}",
+							"type": "Expression"
+						},
+						"ModuleName": {
+							"value": "@{pipeline().parameters.ModuleName}",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "Pipeline_StgDupCheck_DimLoad",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Pipeline_Dim_Extract",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL Stage Duplicate Check - Dim_Load",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"TaskPhase": "Dim_Extract",
+						"StgTableName": "NULL",
+						"RunID": {
+							"value": "@{pipeline().RunId}",
+							"type": "Expression"
+						},
+						"ETLRunStartTime": {
+							"value": "@{activity('LKP_Get_ETLRun_StartTimeStamp').output.firstRow.ETL_Run_Start_TimeStamp}",
+							"type": "Expression"
+						},
+						"ModuleName": {
+							"value": "@{pipeline().parameters.ModuleName}",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "Pipeline_Fact_Extract",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Pipeline_StgDupCheck_DimLoad",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL Source to Stage - Fact_Extract",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"RunID": {
+							"value": "@{pipeline().RunId}",
+							"type": "Expression"
+						},
+						"ModuleName": {
+							"value": "@{pipeline().parameters.ModuleName}",
+							"type": "Expression"
+						},
+						"TaskPhase": "Fact_Extract"
+					}
+				}
+			},
+			{
+				"name": "Pipeline_Facts_Load",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Pipeline_Fact_Extract",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL Stage to Target - Fact_Load",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"ETLRunStartTime": {
+							"value": "@{activity('LKP_Get_ETLRun_StartTimeStamp').output.firstRow.ETL_Run_Start_TimeStamp}",
+							"type": "Expression"
+						},
+						"RunID": {
+							"value": "@{pipeline().RunId}",
+							"type": "Expression"
+						},
+						"ModuleName": {
+							"value": "@{pipeline().parameters.ModuleName}",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "Pipeline_Fact_PostLoad",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Pipeline_Facts_Load",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL Pipeline - Aggregations_Load",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"ETLRunStartTime": {
+							"value": "@{activity('LKP_Get_ETLRun_StartTimeStamp').output.firstRow.ETL_Run_Start_TimeStamp}",
+							"type": "Expression"
+						},
+						"RunID": {
+							"value": "@{pipeline().RunId}",
+							"type": "Expression"
+						},
+						"ModuleName": {
+							"value": "@{pipeline().parameters.ModuleName}",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "SP - ETL Run Number Update",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "Pipeline_Fact_PostLoad",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[UCM].[usp_ETL_RunNumber_Update]",
+					"storedProcedureParameters": {
+						"ETLRunStartTime": {
+							"value": {
+								"value": "@{activity('LKP_Get_ETLRun_StartTimeStamp').output.firstRow.ETL_Run_Start_TimeStamp}",
+								"type": "Expression"
+							},
+							"type": "String"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase1",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "Lookup_Get_ETL_Load_Summary",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "SP - ETL Run Number Update",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderStoredProcedureName": "[UCM].[usp_CT_ETL_task_load_Summary]",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "DS_UCM_SQL_AzureSQL_DBTables",
+						"type": "DatasetReference"
+					}
+				}
+			},
+			{
+				"name": "Var_Get_Error_Message",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Pipeline_Fact_PostLoad",
+						"dependencyConditions": [
+							"Failed",
+							"Skipped"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "errorMessage",
+					"value": {
+						"value": "@concat(\nactivity('LKP_Get_ETLRun_StartTimeStamp')?.Error?.message,'|',\nactivity('Pipeline_Dim_Extract')?.Error?.message,'|',\nactivity('Pipeline_StgDupCheck_DimLoad')?.Error?.message,'|',\nactivity('Pipeline_Fact_Extract')?.Error?.message,'|',\nactivity('Pipeline_Facts_Load')?.Error?.message,'|',\nactivity('Pipeline_Fact_PostLoad')?.Error?.message\n)",
+						"type": "Expression"
+					}
+				}
+			}
+		],
+		"parameters": {
+			"DatabaseName": {
+				"type": "string",
+				"defaultValue": "sqldbaadataanalytics1"
+			},
+			"SchemaName": {
+				"type": "string",
+				"defaultValue": "UCM"
+			},
+			"ModuleName": {
+				"type": "string",
+				"defaultValue": "AP"
+			}
+		},
+		"variables": {
+			"errorMessage": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "OracleUCM_to_Azure_Pipelines"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-01-25T15:20:40Z"
+	}
+}

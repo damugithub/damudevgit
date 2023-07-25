@@ -1,0 +1,146 @@
+{
+	"name": "PL Stage Duplicate Check - Dim_Load",
+	"properties": {
+		"activities": [
+			{
+				"name": "LKP_StgTables_Duplicate_Records_Count",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderStoredProcedureName": "[UCM].[usp_CT_ETL_Task_Table_Duplicates_Check]",
+						"storedProcedureParameters": {
+							"StgTable": {
+								"type": "String",
+								"value": {
+									"value": "@{pipeline().parameters.StgTableName}",
+									"type": "Expression"
+								}
+							},
+							"TaskPhase": {
+								"type": "String",
+								"value": {
+									"value": "@{pipeline().parameters.TaskPhase}",
+									"type": "Expression"
+								}
+							}
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "DS_UCM_SQL_AzureSQL_DBTables",
+						"type": "DatasetReference"
+					},
+					"firstRowOnly": true
+				}
+			},
+			{
+				"name": "IF_Duplicate_Count_Check",
+				"type": "IfCondition",
+				"dependsOn": [
+					{
+						"activity": "LKP_StgTables_Duplicate_Records_Count",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@equals(activity('LKP_StgTables_Duplicate_Records_Count').output.firstRow.output_result,'No Duplicates')",
+						"type": "Expression"
+					},
+					"ifFalseActivities": [
+						{
+							"name": "Var_DupsInfo",
+							"type": "SetVariable",
+							"dependsOn": [],
+							"policy": {
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "emailBody",
+								"value": {
+									"value": "@activity('LKP_StgTables_Duplicate_Records_Count').output.firstRow.output_result",
+									"type": "Expression"
+								}
+							}
+						}
+					],
+					"ifTrueActivities": [
+						{
+							"name": "PL Stage to Target - Dim_Load",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "PL Stage to Target - Dim_Load",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"ETLRunStartTime": {
+										"value": "@{pipeline().parameters.ETLRunStartTime}",
+										"type": "Expression"
+									},
+									"RunID": {
+										"value": "@{pipeline().parameters.RunID}",
+										"type": "Expression"
+									},
+									"ModuleName": {
+										"value": "@{pipeline().parameters.ModuleName}",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"TaskPhase": {
+				"type": "string"
+			},
+			"StgTableName": {
+				"type": "string"
+			},
+			"RunID": {
+				"type": "string"
+			},
+			"ETLRunStartTime": {
+				"type": "string"
+			},
+			"ModuleName": {
+				"type": "string"
+			}
+		},
+		"variables": {
+			"emailBody": {
+				"type": "String"
+			},
+			"TrueVar": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "OracleUCM_to_Azure_Pipelines"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-01-25T15:05:02Z"
+	}
+}
