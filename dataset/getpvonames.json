@@ -1,0 +1,34 @@
+{
+	"name": "getpvonames",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureDataLakeStorage1",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"SourceFolder": {
+				"type": "string"
+			},
+			"SourcePath": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"folderPath": {
+					"value": "@dataset().SourcePath",
+					"type": "Expression"
+				},
+				"fileSystem": {
+					"value": "@dataset().SourceFolder",
+					"type": "Expression"
+				}
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": []
+	}
+}

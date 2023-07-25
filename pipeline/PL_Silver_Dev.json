@@ -1,0 +1,268 @@
+{
+	"name": "PL_Silver_Dev",
+	"properties": {
+		"activities": [
+			{
+				"name": "LKP_Get_PVO_Details",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderQuery": "select target, module_name,source,primary_key_columns,\ncase module_name\nwhen 'CD' then 'Common/'+target \nwhen 'AP' then 'Finance/AP/'+target\nwhen 'AR' then 'Finance/AR/'+target\nwhen 'CD' then 'Finance/CD/'+target\nwhen 'GL' then 'Finance/GL/'+target\nwhen 'XLA' then 'Finance/XLA/'+target\nwhen 'SCOM' then 'SupplyChain/'+target\nwhen 'HCM' then 'HCM/'+target\nwhen 'PA' then 'PA/'+target\nelse Module_Name+'/'+target\nend as sink_path\nfrom [fusion_erp].CT_ETL_Task_control_archrock_g where 1=1 \nand source_type = 'oracle_erp'\nand Task_Phase like '%PreStage%' \nand lower(pvo_status) = 'active'\nand lower(pvo_enabled) in ('y','Y')\nand primary_key_columns is not null\n-- and target in ('crmanalyticsam_crmextractam_hzbiccextractam_customeraccountextractpvo',\n-- 'crmanalyticsam_crmextractam_hzbiccextractam_partyextractpvo',\n-- 'fscmtopmodelam_invuompublicviewam_invunitsofmeasurepvo',\n-- 'fscmtopmodelam_scmextractam_invbiccextractam_inventorylocatorextractpvo',\n-- 'fscmtopmodelam_fincebankrelationshipsam_bankaccountpvo',\n-- 'fscmtopmodelam_finextractam_xlebiccextractam_legalentityextractpvo',\n-- 'fscmtopmodelam_finextractam_cebiccextractam_bankaccountuseextractpvo',\n-- 'fscmtopmodelam_finfunbusinessunitsam_businessunitusagepvo',\n-- 'fscmtopmodelam_fincecashtransactionsam_externaltransactionspvo',\n-- 'fscmtopmodelam_prcpozpublicviewam_supplieraddresspvo')",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "DS_FUSION_ERP_CT_ETL_TASK_CONTROL_G1",
+						"type": "DatasetReference"
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "ForEach PVO Parquet File",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "LKP_Get_PVO_Details",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('LKP_Get_PVO_Details').output.value",
+						"type": "Expression"
+					},
+					"isSequential": false,
+					"batchCount": 2,
+					"activities": [
+						{
+							"name": "PL_SILVER_INNER",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "PL_Silver_Inner_Dev",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"source": {
+										"value": "@item().source",
+										"type": "Expression"
+									},
+									"primarykeys": {
+										"value": "@item().primary_key_columns",
+										"type": "Expression"
+									},
+									"target": {
+										"value": "@item().target",
+										"type": "Expression"
+									},
+									"modulename": {
+										"value": "@item().module_name",
+										"type": "Expression"
+									},
+									"sinkpath": {
+										"value": "@item().sink_path",
+										"type": "Expression"
+									}
+								}
+							}
+						},
+						{
+							"name": "MOVE FILES",
+							"type": "Copy",
+							"dependsOn": [
+								{
+									"activity": "PL_SILVER_INNER",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "ParquetSource",
+									"storeSettings": {
+										"type": "AzureBlobFSReadSettings",
+										"recursive": true,
+										"wildcardFolderPath": {
+											"value": "@concat('oraclefusion/pvo/',item().target)",
+											"type": "Expression"
+										},
+										"wildcardFileName": "*.parquet",
+										"enablePartitionDiscovery": false
+									}
+								},
+								"sink": {
+									"type": "ParquetSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings",
+										"copyBehavior": "PreserveHierarchy"
+									},
+									"formatSettings": {
+										"type": "ParquetWriteSettings"
+									}
+								},
+								"enableStaging": false,
+								"translator": {
+									"type": "TabularTranslator",
+									"typeConversion": true,
+									"typeConversionSettings": {
+										"allowDataTruncation": true,
+										"treatBooleanAsNumber": false
+									}
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "sourcepvo",
+									"type": "DatasetReference",
+									"parameters": {
+										"directory": {
+											"value": "@concat('oraclefusion/pvo/',item().target)",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "archivepvo",
+									"type": "DatasetReference",
+									"parameters": {
+										"directory": {
+											"value": "@concat('oraclefusion/archive/',item().target)",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						},
+						{
+							"name": "Delete1",
+							"type": "Delete",
+							"dependsOn": [
+								{
+									"activity": "MOVE FILES",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"dataset": {
+									"referenceName": "sourcepvo",
+									"type": "DatasetReference",
+									"parameters": {
+										"directory": {
+											"value": "@concat('oraclefusion/pvo/',item().target)",
+											"type": "Expression"
+										}
+									}
+								},
+								"logStorageSettings": {
+									"linkedServiceName": {
+										"referenceName": "AzureDataLakeStorage1",
+										"type": "LinkedServiceReference"
+									},
+									"path": "log-files"
+								},
+								"enableLogging": true,
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"wildcardFileName": "*.parquet",
+									"enablePartitionDiscovery": false
+								}
+							}
+						},
+						{
+							"name": "Update Control Table",
+							"description": "",
+							"type": "Script",
+							"dependsOn": [
+								{
+									"activity": "PL_SILVER_INNER",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"linkedServiceName": {
+								"referenceName": "AzureSqlDatabase1",
+								"type": "LinkedServiceReference"
+							},
+							"typeProperties": {
+								"scripts": [
+									{
+										"type": "Query",
+										"text": {
+											"value": "update Fusion_ERP.CT_ETL_task_control_archrock_g\nset last_run_date_silver = getdate()\nwhere 1=1\nand source_type = 'oracle_erp'\nand Task_Phase like '%PreStage%' \nand lower(pvo_status) = 'active'\nand lower(pvo_enabled) = 'y'\nand target = '@{item().target}'",
+											"type": "Expression"
+										}
+									}
+								],
+								"scriptBlockExecutionTimeout": "02:00:00"
+							}
+						}
+					]
+				}
+			}
+		],
+		"variables": {
+			"azure_function_responce": {
+				"type": "Boolean"
+			},
+			"pvos_with_no_data": {
+				"type": "String"
+			},
+			"LogDetails": {
+				"type": "Array"
+			}
+		},
+		"folder": {
+			"name": "Archrock - Dev"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-05-16T15:32:42Z"
+	}
+}

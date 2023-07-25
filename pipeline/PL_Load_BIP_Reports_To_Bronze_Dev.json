@@ -1,0 +1,156 @@
+{
+	"name": "PL_Load_BIP_Reports_To_Bronze_Dev",
+	"properties": {
+		"activities": [
+			{
+				"name": "LKP_BIP_REPORTS_TABLE",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "Start_Date",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderQuery": "select report_name, report_format,\nreport_path, bronze_folder_name,\nisnull(parameter_list, 'NA') as parameter_list\nfrom Fusion_ERP.CT_ETL_BIP_REPORTS_G where 1=1\nand report_status = 'active'\n-- and report_name = 'qp_pricing_terms_vl'\n--and primary_key_columns is not null\n-- and bronze_folder_name = 'ap_checks_all'",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "DS_FUSION_ERP_CT_ETL_BIP_REPORTS_G",
+						"type": "DatasetReference"
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "Loop_Each_BIP_Report",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "LKP_BIP_REPORTS_TABLE",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('LKP_BIP_REPORTS_TABLE').output.value",
+						"type": "Expression"
+					},
+					"batchCount": 5,
+					"activities": [
+						{
+							"name": "FN-EXTRACT-BIP-REPORTS",
+							"type": "AzureFunctionActivity",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"functionName": "main",
+								"method": "POST",
+								"body": {
+									"value": "{\n    \"secret_name\": \"@{pipeline().parameters.secret_name}\",\n    \"report_path\": \"@{item().report_path}\",\n    \"report_name\": \"@{item().report_name}\",\n    \"report_format\": \"@{item().report_format}\",\n    \"bronze_folder_name\": \"@{item().bronze_folder_name}\",\n    \"parameter_list\": \"@{item().parameter_list}\"\n}",
+									"type": "Expression"
+								}
+							},
+							"linkedServiceName": {
+								"referenceName": "AzureFunction1",
+								"type": "LinkedServiceReference"
+							}
+						},
+						{
+							"name": "Update CT_ETL_BIP_REPORTS_G",
+							"type": "Script",
+							"dependsOn": [
+								{
+									"activity": "FN-EXTRACT-BIP-REPORTS",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"linkedServiceName": {
+								"referenceName": "AzureSqlDatabase1",
+								"type": "LinkedServiceReference"
+							},
+							"typeProperties": {
+								"scripts": [
+									{
+										"type": "Query",
+										"text": {
+											"value": "update Fusion_ERP.CT_ETL_BIP_REPORTS_G set\nlast_successful_runtime = cast('@{variables('start_date')}' as date)\nwhere 1=1\nand report_status = 'active'\nand report_name = '@{item().report_name}'\nand report_format = '@{item().report_format}'",
+											"type": "Expression"
+										}
+									}
+								],
+								"scriptBlockExecutionTimeout": "02:00:00"
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "Start_Date",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "start_date",
+					"value": {
+						"value": "@utcNow()",
+						"type": "Expression"
+					}
+				}
+			}
+		],
+		"parameters": {
+			"secret_name": {
+				"type": "string",
+				"defaultValue": "Satish-Putcha"
+			}
+		},
+		"variables": {
+			"start_date": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "Archrock - Dev"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-06-20T10:13:39Z"
+	}
+}

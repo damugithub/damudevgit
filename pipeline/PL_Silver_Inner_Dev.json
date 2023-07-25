@@ -1,0 +1,403 @@
+{
+	"name": "PL_Silver_Inner_Dev",
+	"properties": {
+		"activities": [
+			{
+				"name": "Get Metadata1",
+				"type": "GetMetadata",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "getpvonames",
+						"type": "DatasetReference",
+						"parameters": {
+							"SourceFolder": "bronze-rawdata",
+							"SourcePath": {
+								"value": "@concat('oraclefusion/pvo/',replace(toLower(pipeline().parameters.source),'.','_'))",
+								"type": "Expression"
+							}
+						}
+					},
+					"fieldList": [
+						"childItems"
+					],
+					"storeSettings": {
+						"type": "AzureBlobFSReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					}
+				}
+			},
+			{
+				"name": "Filter Parquet Files",
+				"type": "AzureFunctionActivity",
+				"dependsOn": [
+					{
+						"activity": "ForEach1",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"functionName": "HttpTrigger1",
+					"method": "POST",
+					"body": {
+						"value": "@concat('{\"name\":\"',join(variables('output'),','),'\"}')",
+						"type": "Expression"
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "AzureFunction1",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "ForEach1",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Get Metadata1",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Get Metadata1').output.childItems",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "Append variable1",
+							"type": "AppendVariable",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "output",
+								"value": {
+									"value": "@if(endswith(item().name,'.parquet'),item().name,'')",
+									"type": "Expression"
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "ForEach2",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Azure Function Responce",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@split(activity('Filter Parquet Files').output.Response,',')",
+						"type": "Expression"
+					},
+					"isSequential": true,
+					"activities": [
+						{
+							"name": "If Condition1",
+							"type": "IfCondition",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"expression": {
+									"value": "@variables('azure_function_responce')",
+									"type": "Expression"
+								},
+								"ifFalseActivities": [
+									{
+										"name": "PVOS_With_No_Data",
+										"type": "SetVariable",
+										"dependsOn": [],
+										"policy": {
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"variableName": "pvos_with_no_data",
+											"value": {
+												"value": "@pipeline().parameters.target",
+												"type": "Expression"
+											}
+										}
+									}
+								],
+								"ifTrueActivities": [
+									{
+										"name": "Data flow1",
+										"type": "ExecuteDataFlow",
+										"dependsOn": [],
+										"policy": {
+											"timeout": "0.12:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"dataflow": {
+												"referenceName": "DF_SILVER_UNIFIED",
+												"type": "DataFlowReference",
+												"parameters": {
+													"SourceFolder": "'bronze-rawdata'",
+													"SourceFilePath": {
+														"value": "'@{concat('oraclefusion/pvo/',pipeline().parameters.target)}'",
+														"type": "Expression"
+													},
+													"SourceFileName": {
+														"value": "'@{item()}'",
+														"type": "Expression"
+													},
+													"SinkFolder": "'silver-functionalareas'",
+													"SinkPath": {
+														"value": "'@{pipeline().parameters.sinkpath}'",
+														"type": "Expression"
+													},
+													"PrimaryKey": {
+														"value": "@split(toUpper(pipeline().parameters.primarykeys), ',')",
+														"type": "Expression"
+													}
+												}
+											},
+											"compute": {
+												"coreCount": 8,
+												"computeType": "General"
+											},
+											"traceLevel": "Fine"
+										}
+									},
+									{
+										"name": "Copy data1",
+										"type": "Copy",
+										"dependsOn": [
+											{
+												"activity": "Data flow1",
+												"dependencyConditions": [
+													"Failed"
+												]
+											}
+										],
+										"policy": {
+											"timeout": "0.12:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"source": {
+												"type": "ParquetSource",
+												"storeSettings": {
+													"type": "AzureBlobFSReadSettings",
+													"recursive": true,
+													"wildcardFolderPath": {
+														"value": "@concat('oraclefusion/pvo/',pipeline().parameters.target)",
+														"type": "Expression"
+													},
+													"wildcardFileName": {
+														"value": "@item()",
+														"type": "Expression"
+													},
+													"enablePartitionDiscovery": false
+												}
+											},
+											"sink": {
+												"type": "ParquetSink",
+												"storeSettings": {
+													"type": "AzureBlobFSWriteSettings"
+												},
+												"formatSettings": {
+													"type": "ParquetWriteSettings"
+												}
+											},
+											"enableStaging": false,
+											"translator": {
+												"type": "TabularTranslator",
+												"typeConversion": true,
+												"typeConversionSettings": {
+													"allowDataTruncation": true,
+													"treatBooleanAsNumber": false
+												}
+											}
+										},
+										"inputs": [
+											{
+												"referenceName": "sourcepvo",
+												"type": "DatasetReference",
+												"parameters": {
+													"directory": {
+														"value": "@concat('oraclefusion/pvo/',pipeline().parameters.target)",
+														"type": "Expression"
+													}
+												}
+											}
+										],
+										"outputs": [
+											{
+												"referenceName": "ErrorPvo",
+												"type": "DatasetReference",
+												"parameters": {
+													"dir": {
+														"value": "@concat('oraclefusion/error/',pipeline().parameters.target)",
+														"type": "Expression"
+													}
+												}
+											}
+										]
+									},
+									{
+										"name": "Delete1",
+										"type": "Delete",
+										"dependsOn": [
+											{
+												"activity": "Copy data1",
+												"dependencyConditions": [
+													"Succeeded"
+												]
+											}
+										],
+										"policy": {
+											"timeout": "0.12:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"dataset": {
+												"referenceName": "sourcepvo",
+												"type": "DatasetReference",
+												"parameters": {
+													"directory": {
+														"value": "@concat('oraclefusion/pvo/',pipeline().parameters.target,'/',item())",
+														"type": "Expression"
+													}
+												}
+											},
+											"logStorageSettings": {
+												"linkedServiceName": {
+													"referenceName": "AzureDataLakeStorage1",
+													"type": "LinkedServiceReference"
+												},
+												"path": "log-files"
+											},
+											"enableLogging": true,
+											"storeSettings": {
+												"type": "AzureBlobFSReadSettings",
+												"recursive": true,
+												"enablePartitionDiscovery": false
+											}
+										}
+									}
+								]
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "Azure Function Responce",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Filter Parquet Files",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "azure_function_responce",
+					"value": {
+						"value": "@not(equals(activity('Filter Parquet Files').output.Response, 'NO_DATA_FOUND'))",
+						"type": "Expression"
+					}
+				}
+			}
+		],
+		"parameters": {
+			"source": {
+				"type": "string"
+			},
+			"primarykeys": {
+				"type": "string"
+			},
+			"target": {
+				"type": "string"
+			},
+			"modulename": {
+				"type": "string"
+			},
+			"sinkpath": {
+				"type": "string"
+			}
+		},
+		"variables": {
+			"parquetfilenames": {
+				"type": "String"
+			},
+			"module_name": {
+				"type": "String"
+			},
+			"source": {
+				"type": "String"
+			},
+			"pk": {
+				"type": "String"
+			},
+			"output": {
+				"type": "Array"
+			},
+			"azure_function_responce": {
+				"type": "Boolean"
+			},
+			"pvos_with_no_data": {
+				"type": "String"
+			},
+			"LogDetails": {
+				"type": "Array"
+			}
+		},
+		"folder": {
+			"name": "Archrock - Dev"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-07-02T15:56:06Z"
+	}
+}

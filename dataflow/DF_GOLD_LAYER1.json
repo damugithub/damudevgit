@@ -1,0 +1,62 @@
+{
+	"name": "DF_GOLD_LAYER1",
+	"properties": {
+		"folder": {
+			"name": "Archrock - DEV"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "DS_ADLS_Archrock1",
+						"type": "DatasetReference"
+					},
+					"name": "sourceview"
+				}
+			],
+			"sinks": [
+				{
+					"linkedService": {
+						"referenceName": "AzureDataLakeStorage1",
+						"type": "LinkedServiceReference"
+					},
+					"name": "deltatarget"
+				}
+			],
+			"transformations": [],
+			"scriptLines": [
+				"parameters{",
+				"     sql_query as string ('sqlquery'),",
+				"     target_folder_name as string ('folder_name'),",
+				"     target_conatiner_name as string ('gold-dimensional-model')",
+				"}",
+				"source(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     query: ($sql_query),",
+				"     format: 'query') ~> sourceview",
+				"sourceview sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'delta',",
+				"     fileSystem: ($target_conatiner_name),",
+				"     folderPath: ($target_folder_name),",
+				"     truncate: true,",
+				"     mergeSchema: false,",
+				"     autoCompact: false,",
+				"     optimizedWrite: false,",
+				"     vacuum: 0,",
+				"     deletable: false,",
+				"     insertable: true,",
+				"     updateable: false,",
+				"     upsertable: false,",
+				"     umask: 0777,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     saveOrder: 1) ~> deltatarget"
+			]
+		}
+	}
+}

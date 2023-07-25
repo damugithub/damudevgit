@@ -1,0 +1,499 @@
+{
+	"name": "PL_Get_BICC_Content_To_Bronze_Dev",
+	"properties": {
+		"description": "Load zip file content as parquet files in Bronze Layer by JobId and RequestId as parameters",
+		"activities": [
+			{
+				"name": "PVOZipFileNames",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Loop Until RequetId completion succeed",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "PVOZipFileNames",
+					"value": {
+						"value": "@split(activity('FN-GET-PVO-ZIP-FILES-LIST-RP').output.Response, '~~')",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Success ProcessStatus",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "ForEach ZIP File",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "ProcessStatus",
+					"value": "SUCCESS"
+				}
+			},
+			{
+				"name": "Failed ProcessStatus",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "ForEach ZIP File",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "ProcessStatus",
+					"value": "FAILED"
+				}
+			},
+			{
+				"name": "Loop Until RequetId completion succeed",
+				"type": "Until",
+				"dependsOn": [
+					{
+						"activity": "Until Condition Variable",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@not(equals(variables('get_pvo_zip_files_fn_output'), 'ERROR'))",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "FN-GET-PVO-ZIP-FILES-LIST-RP",
+							"type": "AzureFunctionActivity",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"functionName": "main",
+								"method": "POST",
+								"body": {
+									"value": "{ \n  \"job_id\": \"@{activity('LKP_Get_JobId_RequestId_From_CT').output.value[0].bicc_job_id}\",\n  \"request_id\": \"@{activity('LKP_Get_JobId_RequestId_From_CT').output.value[0].bicc_request_id}\",\n  \"secret_name\": \"@{pipeline().parameters.SecretName}\"\n}\n\n",
+									"type": "Expression"
+								}
+							},
+							"linkedServiceName": {
+								"referenceName": "AzureFunction1",
+								"type": "LinkedServiceReference"
+							}
+						},
+						{
+							"name": "Function Failed",
+							"type": "SetVariable",
+							"dependsOn": [
+								{
+									"activity": "FN-GET-PVO-ZIP-FILES-LIST-RP",
+									"dependencyConditions": [
+										"Failed"
+									]
+								}
+							],
+							"policy": {
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "get_pvo_zip_files_fn_output",
+								"value": "ERROR"
+							}
+						},
+						{
+							"name": "Function Succeeded",
+							"type": "SetVariable",
+							"dependsOn": [
+								{
+									"activity": "FN-GET-PVO-ZIP-FILES-LIST-RP",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "get_pvo_zip_files_fn_output",
+								"value": {
+									"value": "@activity('FN-GET-PVO-ZIP-FILES-LIST-RP').output.Response",
+									"type": "Expression"
+								}
+							}
+						},
+						{
+							"name": "Wait for RequestId Completion",
+							"type": "Wait",
+							"dependsOn": [
+								{
+									"activity": "Function Failed",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"userProperties": [],
+							"typeProperties": {
+								"waitTimeInSeconds": 60
+							}
+						}
+					],
+					"timeout": "0.12:00:00"
+				}
+			},
+			{
+				"name": "Until Condition Variable",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "LKP_Get_JobId_RequestId_From_CT",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "get_pvo_zip_files_fn_output",
+					"value": "ERROR"
+				}
+			},
+			{
+				"name": "LKP_Get_JobId_RequestId_From_CT",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderQuery": "select  bicc_job_id, bicc_request_id \r\nfrom Fusion_ERP.CT_ETL_Task_control_archrock_g where 1=1 \r\nand source_type = 'oracle_erp'\r\nand Task_Phase like '%PreStage%' \r\nand lower(pvo_status) = 'active'\r\nand lower(pvo_enabled) = 'Y'\r\n-- and target in ('fscmtopmodelam_analyticsserviceam_lookupvaluespvo', 'fscmtopmodelam_personam_personrefpvo')\r\n-- and target in (\r\n-- 'crmanalyticsam_crmextractam_hzbiccextractam_customeraccountextractpvo',\r\n-- 'crmanalyticsam_crmextractam_hzbiccextractam_partyextractpvo'\r\n-- )\r\n-- and target in ('fscmtopmodelam_finartoppublicmodelam_transactionlinedistributionpvo',\r\n-- 'fscmtopmodelam_finartoppublicmodelam_customerprofile',\r\n-- 'fscmtopmodelam_finartoppublicmodelam_receiptapplicationpvo',\r\n-- 'fscmtopmodelam_receiptaccountingam_receiptaccountingtxnrefpvo')",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "DS_FUSION_ERP_CT_ETL_TASK_CONTROL_G1",
+						"type": "DatasetReference"
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "ForEach PVO - Download ZIP",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "PVOZipFileNames",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@variables('PVOZipFileNames')",
+						"type": "Expression"
+					},
+					"batchCount": 5,
+					"activities": [
+						{
+							"name": "FN-LOAD-ZIP-FILES-RP",
+							"type": "AzureFunctionActivity",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"functionName": "main",
+								"method": "POST",
+								"body": {
+									"value": "{\n    \"pvo_zip_file_name\": \"@{item()}\",\n    \"secret_name\": \"@{pipeline().parameters.SecretName}\"\n}",
+									"type": "Expression"
+								}
+							},
+							"linkedServiceName": {
+								"referenceName": "AzureFunction1",
+								"type": "LinkedServiceReference"
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "Get_list_of_blobs",
+				"type": "GetMetadata",
+				"dependsOn": [
+					{
+						"activity": "ForEach PVO - Download ZIP",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "getpvonames",
+						"type": "DatasetReference",
+						"parameters": {
+							"SourceFolder": {
+								"value": "@pipeline().parameters.bronze_container_name",
+								"type": "Expression"
+							},
+							"SourcePath": {
+								"value": "@concat(pipeline().parameters.pvo_zip_files_path, formatDateTime(utcNow(),'yyyMMdd'))",
+								"type": "Expression"
+							}
+						}
+					},
+					"fieldList": [
+						"childItems"
+					],
+					"storeSettings": {
+						"type": "AzureBlobFSReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					}
+				}
+			},
+			{
+				"name": "ForEach ZIP File",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Get_list_of_blobs",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Get_list_of_blobs').output.childItems",
+						"type": "Expression"
+					},
+					"batchCount": 4,
+					"activities": [
+						{
+							"name": "Zip to Parquet conversion",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "DelimitedTextSource",
+									"storeSettings": {
+										"type": "AzureBlobStorageReadSettings",
+										"recursive": true,
+										"enablePartitionDiscovery": false
+									},
+									"formatSettings": {
+										"type": "DelimitedTextReadSettings",
+										"compressionProperties": {
+											"type": "ZipDeflateReadSettings"
+										}
+									}
+								},
+								"sink": {
+									"type": "ParquetSink",
+									"storeSettings": {
+										"type": "AzureBlobStorageWriteSettings"
+									},
+									"formatSettings": {
+										"type": "ParquetWriteSettings"
+									}
+								},
+								"enableStaging": false,
+								"translator": {
+									"type": "TabularTranslator",
+									"typeConversion": true,
+									"typeConversionSettings": {
+										"allowDataTruncation": true,
+										"treatBooleanAsNumber": false
+									}
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "Archrock_Delimited_UCM_ZIP_files",
+									"type": "DatasetReference",
+									"parameters": {
+										"container_name": {
+											"value": "@pipeline().parameters.bronze_container_name",
+											"type": "Expression"
+										},
+										"file_path": {
+											"value": "@concat(pipeline().parameters.pvo_zip_files_path, formatDateTime(utcNow(),'yyyMMdd'))",
+											"type": "Expression"
+										},
+										"file_name": {
+											"value": "@item().name",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "Archrock_Parquet_PVO_files",
+									"type": "DatasetReference",
+									"parameters": {
+										"container_name": {
+											"value": "@pipeline().parameters.bronze_container_name",
+											"type": "Expression"
+										},
+										"file_path": {
+											"value": "@concat(pipeline().parameters.pvo_parquet_files_path, substring(split(item().name, '-')[0], 5, add(length(split(item().name, '-')[0]), -5)))",
+											"type": "Expression"
+										},
+										"file_name": {
+											"value": "@concat(split(item().name, '.')[0], '.parquet')",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						},
+						{
+							"name": "Update control table",
+							"type": "Script",
+							"dependsOn": [
+								{
+									"activity": "Zip to Parquet conversion",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"linkedServiceName": {
+								"referenceName": "AzureSqlDatabase1",
+								"type": "LinkedServiceReference"
+							},
+							"typeProperties": {
+								"scripts": [
+									{
+										"type": "Query",
+										"text": {
+											"value": "update [fusion_erp].[CT_ETL_Task_control_archrock_g]\nset Last_Successful_Start_Timestamp = getdate()\nwhere 1=1 \nand source_type = 'oracle_erp'\nand Task_Phase like '%PreStage%' \nand lower(pvo_status) = 'active'\nand lower(pvo_enabled) = 'y'\n",
+											"type": "Expression"
+										}
+									}
+								],
+								"scriptBlockExecutionTimeout": "02:00:00"
+							}
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"SecretName": {
+				"type": "string",
+				"defaultValue": "Satish-Putcha"
+			},
+			"bronze_container_name": {
+				"type": "string",
+				"defaultValue": "bronze-rawdata"
+			},
+			"pvo_zip_files_path": {
+				"type": "string",
+				"defaultValue": "oraclefusion/raw_zip_files/"
+			},
+			"pvo_parquet_files_path": {
+				"type": "string",
+				"defaultValue": "oraclefusion/pvo/"
+			}
+		},
+		"variables": {
+			"PVOZipFileNames": {
+				"type": "Array"
+			},
+			"ProcessStatus": {
+				"type": "String"
+			},
+			"get_pvo_zip_files_fn_output": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "Archrock - Dev"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-06-28T09:22:00Z"
+	}
+}

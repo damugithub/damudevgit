@@ -1,0 +1,214 @@
+{
+	"name": "PL_Gold_Inner_Dev1",
+	"properties": {
+		"activities": [
+			{
+				"name": "Get Records Based on Set Number",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderQuery": {
+							"value": "select\n\ttarget, create_view_flag,\n\t''''+replace(target_query,'''', '\\''')+'''' as target_query,\n\t'XX_GL_OPS_V/'+target as target_folder_name\nfrom\n[Fusion_ERP].[CT_ETL_TASK_CONTROL_G_Archrock_Views]\nwhere 1=1 and is_runnable = 'y'\nand set_number = @{pipeline().parameters.set_number}",
+							"type": "Expression"
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "DS_FUSION_ERP_CT_ETL_TASK_CONTROL_G1",
+						"type": "DatasetReference"
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "ForEach Target record",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Get Records Based on Set Number",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Get Records Based on Set Number').output.value",
+						"type": "Expression"
+					},
+					"batchCount": 2,
+					"activities": [
+						{
+							"name": "DF_GOLD_LAYER",
+							"type": "ExecuteDataFlow",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"dataflow": {
+									"referenceName": "DF_GOLD_LAYER1",
+									"type": "DataFlowReference",
+									"parameters": {
+										"sql_query": {
+											"value": "@item().target_query",
+											"type": "Expression"
+										},
+										"target_folder_name": {
+											"value": "'@{item().target_folder_name}'",
+											"type": "Expression"
+										},
+										"target_conatiner_name": "'gold-dimensional-model'"
+									}
+								},
+								"compute": {
+									"coreCount": 8,
+									"computeType": "General"
+								},
+								"traceLevel": "Fine"
+							}
+						},
+						{
+							"name": "Create View IF",
+							"description": "If create_view_flag = 'Y'\nthen create a view object",
+							"type": "IfCondition",
+							"dependsOn": [
+								{
+									"activity": "DF_GOLD_LAYER",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"userProperties": [],
+							"typeProperties": {
+								"expression": {
+									"value": "@equals(toUpper(item().create_view_flag), 'Y')",
+									"type": "Expression"
+								},
+								"ifFalseActivities": [
+									{
+										"name": "Dummy Variable",
+										"type": "SetVariable",
+										"dependsOn": [],
+										"policy": {
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"variableName": "dummy",
+											"value": "'dummy'"
+										}
+									}
+								],
+								"ifTrueActivities": [
+									{
+										"name": "Create View Script",
+										"description": "Create view object in ArchrockDemo database.",
+										"type": "Script",
+										"dependsOn": [],
+										"policy": {
+											"timeout": "0.12:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"linkedServiceName": {
+											"referenceName": "AzureSqlDatabase1",
+											"type": "LinkedServiceReference"
+										},
+										"typeProperties": {
+											"scripts": [
+												{
+													"type": "Query",
+													"text": {
+														"value": "@concat(\n'CREATE OR ALTER VIEW DBO.', item().target, ' AS\nSELECT * FROM\nOPENROWSET(\n    BULK ''https://archrockdemostorage.dfs.core.windows.net/gold-dimensional-model/XX_GL_OPS_V/', item().target, '/'',\n    FORMAT = ''DELTA''\n) AS abc;'\n)",
+														"type": "Expression"
+													}
+												}
+											],
+											"scriptBlockExecutionTimeout": "02:00:00"
+										}
+									}
+								]
+							}
+						},
+						{
+							"name": "Update last_successful_runtime",
+							"description": "Update last_successful_runtime column in control table.",
+							"type": "Script",
+							"dependsOn": [
+								{
+									"activity": "DF_GOLD_LAYER",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"linkedServiceName": {
+								"referenceName": "AzureSqlDatabase1",
+								"type": "LinkedServiceReference"
+							},
+							"typeProperties": {
+								"scripts": [
+									{
+										"type": "Query",
+										"text": {
+											"value": "update Fusion_ERP.[CT_ETL_TASK_CONTROL_G_Archrock_Views\nset last_successful_runtime = getdate()\nwhere 1=1\nand target = '@{item().target}'",
+											"type": "Expression"
+										}
+									}
+								],
+								"scriptBlockExecutionTimeout": "02:00:00"
+							}
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"set_number": {
+				"type": "int",
+				"defaultValue": 0
+			}
+		},
+		"variables": {
+			"dummy": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "Archrock - Dev"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-05-17T08:32:43Z"
+	}
+}

@@ -1,0 +1,342 @@
+{
+	"name": "PL_Silver_BIP_Reports Inner_Dev",
+	"properties": {
+		"activities": [
+			{
+				"name": "Get Metadata1",
+				"type": "GetMetadata",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "getpvonames",
+						"type": "DatasetReference",
+						"parameters": {
+							"SourceFolder": "bronze-rawdata",
+							"SourcePath": {
+								"value": "@concat('bip_reports/in/',pipeline().parameters.source)",
+								"type": "Expression"
+							}
+						}
+					},
+					"fieldList": [
+						"childItems"
+					],
+					"storeSettings": {
+						"type": "AzureBlobFSReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					}
+				}
+			},
+			{
+				"name": "ForEach1",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Get Metadata1",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Get Metadata1').output.childItems",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "Append variable1",
+							"type": "AppendVariable",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "output",
+								"value": {
+									"value": "@if(endswith(item().name,'.parquet'),item().name,'')",
+									"type": "Expression"
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "ForEach2",
+				"description": "split(activity('Filter Parquet Files').output.Response,',')",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Parquet Files",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@split(variables('parquet_files_list'),',')",
+						"type": "Expression"
+					},
+					"isSequential": true,
+					"activities": [
+						{
+							"name": "DF Silver",
+							"type": "ExecuteDataFlow",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"dataflow": {
+									"referenceName": "DF_SILVER_UNIFIED",
+									"type": "DataFlowReference",
+									"parameters": {
+										"SourceFolder": "'bronze-rawdata'",
+										"SourceFilePath": {
+											"value": "'@{concat('bip_reports/in/',pipeline().parameters.target)}'",
+											"type": "Expression"
+										},
+										"SourceFileName": {
+											"value": "'@{item()}'",
+											"type": "Expression"
+										},
+										"SinkFolder": "'silver-functionalareas'",
+										"SinkPath": {
+											"value": "'@{pipeline().parameters.sinkpath}'",
+											"type": "Expression"
+										},
+										"PrimaryKey": {
+											"value": "@split(toUpper(pipeline().parameters.primarykeys), ',')",
+											"type": "Expression"
+										}
+									}
+								},
+								"compute": {
+									"coreCount": 8,
+									"computeType": "General"
+								},
+								"traceLevel": "Fine"
+							}
+						},
+						{
+							"name": "Move Parquet to Error",
+							"type": "Copy",
+							"dependsOn": [
+								{
+									"activity": "DF Silver",
+									"dependencyConditions": [
+										"Failed"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "ParquetSource",
+									"storeSettings": {
+										"type": "AzureBlobFSReadSettings",
+										"recursive": true,
+										"wildcardFolderPath": {
+											"value": "@concat('bip_reports/in/',pipeline().parameters.target)",
+											"type": "Expression"
+										},
+										"wildcardFileName": {
+											"value": "@item()",
+											"type": "Expression"
+										},
+										"enablePartitionDiscovery": false
+									}
+								},
+								"sink": {
+									"type": "ParquetSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									},
+									"formatSettings": {
+										"type": "ParquetWriteSettings"
+									}
+								},
+								"enableStaging": false,
+								"translator": {
+									"type": "TabularTranslator",
+									"typeConversion": true,
+									"typeConversionSettings": {
+										"allowDataTruncation": true,
+										"treatBooleanAsNumber": false
+									}
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "sourcepvo",
+									"type": "DatasetReference",
+									"parameters": {
+										"directory": {
+											"value": "@concat('bip_reports/in/',pipeline().parameters.target)",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "ErrorPvo",
+									"type": "DatasetReference",
+									"parameters": {
+										"dir": {
+											"value": "@concat('bip_reports/error/',pipeline().parameters.target)",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						},
+						{
+							"name": "Delete1_copy1",
+							"type": "Delete",
+							"dependsOn": [
+								{
+									"activity": "Move Parquet to Error",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"dataset": {
+									"referenceName": "sourcepvo",
+									"type": "DatasetReference",
+									"parameters": {
+										"directory": {
+											"value": "@concat('bip_reports/in/',pipeline().parameters.target,'/',item())",
+											"type": "Expression"
+										}
+									}
+								},
+								"logStorageSettings": {
+									"linkedServiceName": {
+										"referenceName": "AzureDataLakeStorage1",
+										"type": "LinkedServiceReference"
+									},
+									"path": "log-files"
+								},
+								"enableLogging": true,
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "Parquet Files",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "ForEach1",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "parquet_files_list",
+					"value": {
+						"value": "@join(variables('output'),',')",
+						"type": "Expression"
+					}
+				}
+			}
+		],
+		"parameters": {
+			"source": {
+				"type": "string"
+			},
+			"primarykeys": {
+				"type": "string"
+			},
+			"target": {
+				"type": "string"
+			},
+			"modulename": {
+				"type": "string"
+			},
+			"sinkpath": {
+				"type": "string"
+			}
+		},
+		"variables": {
+			"parquetfilenames": {
+				"type": "String"
+			},
+			"module_name": {
+				"type": "String"
+			},
+			"source": {
+				"type": "String"
+			},
+			"pk": {
+				"type": "String"
+			},
+			"output": {
+				"type": "Array"
+			},
+			"azure_function_responce": {
+				"type": "Boolean"
+			},
+			"pvos_with_no_data": {
+				"type": "String"
+			},
+			"LogDetails": {
+				"type": "Array"
+			},
+			"parquet_files_list": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "Archrock - Dev"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-05-04T09:16:22Z"
+	}
+}

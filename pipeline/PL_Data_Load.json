@@ -1,0 +1,118 @@
+{
+	"name": "PL_Data_Load",
+	"properties": {
+		"activities": [
+			{
+				"name": "PL_Create_JobID_Dev",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_Create_JobID_Dev",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "PL_Get_BICC_Content_To_Bronze_Dev",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "PL_Create_JobID_Dev",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_Get_BICC_Content_To_Bronze_Dev",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "PL_Silver_Dev",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "PL_Get_BICC_Content_To_Bronze_Dev",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_Silver_Dev",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "PL_Load_BIP_Reports_To_Bronze_Dev",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_Load_BIP_Reports_To_Bronze_Dev",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "PL_Silver_BIP_Reports_Dev",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "PL_Load_BIP_Reports_To_Bronze_Dev",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_Silver_BIP_Reports_Dev",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "PL_Gold_Dev",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "PL_Silver_Dev",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_Gold_Dev1",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			}
+		],
+		"folder": {
+			"name": "Archrock - Dev"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-05-16T10:47:32Z"
+	}
+}

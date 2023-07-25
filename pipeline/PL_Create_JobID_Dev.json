@@ -1,0 +1,386 @@
+{
+	"name": "PL_Create_JobID_Dev",
+	"properties": {
+		"activities": [
+			{
+				"name": "LKP_get_pvos_list",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "ExpiredDate",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderQuery": "select source, target, module_name, isnull(upper(pvo_columns), 'ALL') pvo_columns\nfrom Fusion_ERP.CT_ETL_Task_Control_archrock_g  where 1=1 \nand source_type = 'oracle_erp'\nand Task_Phase like '%PreStage%' \nand lower(pvo_status) = 'active'\nand lower(pvo_enabled) = 'Y'\n-- and target in ('fscmtopmodelam_analyticsserviceam_lookupvaluespvo', 'fscmtopmodelam_personam_personrefpvo')\n-- and target in (\n-- 'crmanalyticsam_crmextractam_hzbiccextractam_customeraccountextractpvo',\n-- 'crmanalyticsam_crmextractam_hzbiccextractam_partyextractpvo'\n-- )\n-- 'fscmtopmodelam_finartoppublicmodelam_transactionlinedistributionpvo',\n-- 'fscmtopmodelam_finartoppublicmodelam_customerprofile',\n-- 'fscmtopmodelam_finartoppublicmodelam_receiptapplicationpvo',\n-- 'fscmtopmodelam_receiptaccountingam_receiptaccountingtxnrefpvo')",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "DS_FUSION_ERP_CT_ETL_TASK_CONTROL_G1",
+						"type": "DatasetReference"
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "For Each PVO",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "LKP_get_pvos_list",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('LKP_get_pvos_list').output.value",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "List of PVOS",
+							"type": "AppendVariable",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "pvos_list",
+								"value": {
+									"value": "@concat(item().source, '~', item().pvo_columns)",
+									"type": "Expression"
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "pvo_names_string",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "For Each PVO",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "pvo_names_string",
+					"value": {
+						"value": "@join(variables('pvos_list'), '^')",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "FN_GET_DATASTORES_OBJECT",
+				"description": "{\n    \"pvos_string\": \"@{variables('pvo_names_string')}\"\n}",
+				"type": "AzureFunctionActivity",
+				"dependsOn": [
+					{
+						"activity": "pvo_names_string",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"functionName": "main",
+					"method": "POST",
+					"body": {
+						"value": "{\n    \"pvos_string\": \"@{variables('pvo_names_string')}\",\n    \"job_name\": \"@{pipeline().parameters.BICCJobName}\"\n}",
+						"type": "Expression"
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "AzureFunction1",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "CreatedDate",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "CreatedDate",
+					"value": {
+						"value": "@utcNow()",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "ExpiredDate",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "CreatedDate",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "ExpiredDate",
+					"value": {
+						"value": "@addMinutes(variables('CreatedDate'), 2)",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "JobId",
+				"description": "56440652296427 -- 59\n517414952336663 -- 63\n78515954075691 -- 4",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Create Job ID",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "JobId",
+					"value": {
+						"value": "@activity('Create Job ID').output.id",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "RequestId",
+				"description": "2905171\n@json(xml(activity('Get BICC Request ID using JobID').output.Response))['env:Envelope']['env:Body']['ns0:submitRequestResponse']['requestId']['#text']",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Get BICC Request ID using JobID",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "RequestId",
+					"value": {
+						"value": "@json(xml(activity('Get BICC Request ID using JobID').output.Response))['env:Envelope']['env:Body']['ns0:submitRequestResponse']['requestId']['#text']",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Get BICC Request ID using JobID",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "JobId",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"url": "https://ebdt-dev1.fa.us2.oraclecloud.com:443/bi/ess/esswebservice?wsdl",
+					"method": "POST",
+					"headers": {
+						"Content-Type": "text/xml"
+					},
+					"body": {
+						"value": "@concat('<soapenv:Envelope xmlns:sch=\"http://xmlns.oracle.com/scheduler\" xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:typ=\"http://xmlns.oracle.com/scheduler/types\">\n   <soapenv:Header xmlns:wsa=\"http://www.w3.org/2005/08/addressing\">\n      <wsse:Security soapenv:mustUnderstand=\"1\" xmlns:wsse=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd\" xmlns:wsu=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd\">\n         <wsse:UsernameToken wsu:Id=\"UsernameToken-DB6E117EBB2A285E92167196025814\">\n            <wsse:Username>Satish.Putcha</wsse:Username>\n            <wsse:Password Type=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText\">Oracle@1</wsse:Password>\n            <!--<wsse:Nonce EncodingType=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary\">CTr8EqWKZ/UB8xX3DW0cpg==</wsse:Nonce>\n            <wsu:Created>2022-12-25T09:24:18.138Z</wsu:Created>\n-->\n         </wsse:UsernameToken>\n\n         <wsu:Timestamp wsu:Id=\"TS-BB97F1401F6271273E16718029791004\">\n            <wsu:Created>',variables('CreatedDate'),'</wsu:Created>\n            <wsu:Expires>',variables('ExpiredDate'),'</wsu:Expires>\n         </wsu:Timestamp>\n      </wsse:Security>\n      <wsa:MessageID>ujanke4711</wsa:MessageID>\n      <wsa:Action>submitRequest</wsa:Action>\n   </soapenv:Header>\n   <soapenv:Body>\n      <sch:submitRequest>\n         <sch:description>Creating RequestId using JobId</sch:description>\n         <sch:jobDefinitionId>\n            <!--Optional:-->\n            <typ:description>BICCC Job Run from Azure Web Activity</typ:description>\n            <!--Optional:-->\n            <typ:name>BICloudConnectorJobDefinition</typ:name>\n            <!--Optional:-->\n            <typ:packageName>oracle.apps.ess.biccc</typ:packageName>\n            <!--Optional:-->\n            <typ:type>JOB_DEFINITION</typ:type>\n         </sch:jobDefinitionId>\n         <sch:application>oracle.biacm</sch:application>\n         <sch:requestParameters>\n            <!--0 to 1000 repetitions:-->\n            <typ:parameter>\n               <!--Optional:-->\n               <typ:dataType>STRING</typ:dataType>\n               <!--Optional:-->\n               <typ:name>SYS_className</typ:name>\n               <!--Optional:-->\n               <typ:scope/>\n               <!--Optional:-->\n               <typ:value>oracle.esshost.impl.CloudAdaptorJobImpl</typ:value>\n            </typ:parameter>\n            <typ:parameter>\n               <!--Optional:-->\n               <typ:dataType>STRING</typ:dataType>\n               <!--Optional:-->\n               <typ:name>SYS_requestCategory</typ:name>\n               <!--Optional:-->\n               <typ:scope/>\n               <!--Optional:-->\n               <typ:value>JobSchedule</typ:value>\n            </typ:parameter>\n            <typ:parameter>\n               <!--Optional:-->\n               <typ:dataType>LONG</typ:dataType>\n               <!--Optional:-->\n               <typ:name>JOB_ID</typ:name>\n               <!--Optional:-->\n               <typ:scope/>\n               <!--Optional:-->\n               <typ:value>',variables('JobId'),'</typ:value>\n            </typ:parameter>\n            <typ:parameter>\n               <!--Optional:-->\n               <typ:dataType>STRING</typ:dataType>\n               <!--Optional:-->\n               <typ:name>EXTRACT_JOB_TYPE</typ:name>\n               <!--Optional:-->\n               <typ:scope/>\n               <!--Optional:-->\n               <typ:value>VO_EXTRACT</typ:value>\n            </typ:parameter>\n            <typ:parameter>\n               <!--Optional:-->\n               <typ:dataType>STRING</typ:dataType>\n               <!--Optional:-->\n               <typ:name>EXTERNAL_STORAGE_LIST</typ:name>\n               <!--Optional:-->\n               <typ:scope/>\n               <!--Optional:-->\n               <typ:value>UCM</typ:value>\n            </typ:parameter>\n         </sch:requestParameters>\n      </sch:submitRequest>\n   </soapenv:Body>\n</soapenv:Envelope>')",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Create Job ID",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "FN_GET_DATASTORES_OBJECT",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"url": {
+						"value": "https://ebdt-dev1.fa.us2.oraclecloud.com/biacm/rest/meta/jobs/",
+						"type": "Expression"
+					},
+					"method": "PUT",
+					"headers": {
+						"powershell": "'[convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes(\\\"USERNAME:PASSWORD\\\"))'",
+						"Content-Type": "application/json"
+					},
+					"body": {
+						"value": "@activity('FN_GET_DATASTORES_OBJECT').output.jobid_req_body",
+						"type": "Expression"
+					},
+					"authentication": {
+						"type": "Basic",
+						"username": "Satish.putcha",
+						"password": {
+							"type": "SecureString",
+							"value": "**********"
+						}
+					}
+				}
+			},
+			{
+				"name": "Update Control Table",
+				"description": "Update bicc_job_id, bicc_job_name, bicc_request_id columns in control table.",
+				"type": "Script",
+				"dependsOn": [
+					{
+						"activity": "RequestId",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase1",
+					"type": "LinkedServiceReference"
+				},
+				"typeProperties": {
+					"scripts": [
+						{
+							"type": "Query",
+							"text": {
+								"value": "update Fusion_ERP.CT_ETL_task_control_archrock_g set\nbicc_job_id = @{variables('JobId')},\nbicc_request_id = @{variables('RequestId')},\nbicc_job_name = '@{pipeline().parameters.BICCJobName}'\nwhere 1=1\nand source_type = 'oracle_erp'\nand Task_Phase like '%PreStage%' \nand lower(pvo_status) = 'active'\nand lower(pvo_enabled) = 'y'",
+								"type": "Expression"
+							}
+						}
+					],
+					"scriptBlockExecutionTimeout": "02:00:00"
+				}
+			}
+		],
+		"parameters": {
+			"SecretName": {
+				"type": "string",
+				"defaultValue": "Satish-Putcha"
+			},
+			"BICCJobName": {
+				"type": "string",
+				"defaultValue": "Load_Test_MB"
+			}
+		},
+		"variables": {
+			"JobId": {
+				"type": "String"
+			},
+			"RequestId": {
+				"type": "String"
+			},
+			"PVOZipFileNames": {
+				"type": "Array"
+			},
+			"ProcessStatus": {
+				"type": "String"
+			},
+			"pvos_list": {
+				"type": "Array"
+			},
+			"pvo_names_string": {
+				"type": "String"
+			},
+			"BICC_Job_Name": {
+				"type": "String"
+			},
+			"get_pvo_zip_files_fn_output": {
+				"type": "String"
+			},
+			"LogDetails": {
+				"type": "Array"
+			},
+			"CreatedDate": {
+				"type": "String"
+			},
+			"ExpiredDate": {
+				"type": "String"
+			},
+			"lkp_list_to_str": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "Archrock - Dev"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-06-28T08:19:13Z"
+	}
+}

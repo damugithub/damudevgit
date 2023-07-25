@@ -1,0 +1,42 @@
+{
+	"name": "DS_FUSION_ERP_CT_ETL_BIP_REPORTS_G",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureSqlDatabase1",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "report_key",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "report_name",
+				"type": "varchar"
+			},
+			{
+				"name": "report_format",
+				"type": "varchar"
+			},
+			{
+				"name": "report_path",
+				"type": "varchar"
+			},
+			{
+				"name": "w_insert_dt",
+				"type": "date"
+			},
+			{
+				"name": "w_update_dt",
+				"type": "date"
+			}
+		],
+		"typeProperties": {
+			"schema": "Fusion_ERP",
+			"table": "CT_ETL_BIP_REPORTS_G"
+		}
+	}
+}

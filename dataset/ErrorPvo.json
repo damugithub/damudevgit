@@ -1,0 +1,28 @@
+{
+	"name": "ErrorPvo",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureDataLakeStorage1",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"dir": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"folderPath": {
+					"value": "@dataset().dir",
+					"type": "Expression"
+				},
+				"fileSystem": "bronze-rawdata"
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": []
+	}
+}
