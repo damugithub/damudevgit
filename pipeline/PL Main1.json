@@ -1,0 +1,451 @@
+{
+	"name": "PL Main1",
+	"properties": {
+		"description": "Main Pipeline.",
+		"activities": [
+			{
+				"name": "LKP_Get_ETLRun_StartTimeStamp",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderQuery": "SELECT CAST( SYSDATETIMEOFFSET() at time zone 'Central Standard Time' as datetime) AS ETL_Run_Start_TimeStamp",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "DS_CT_ETL_TASK_CONTROL_G",
+						"type": "DatasetReference"
+					},
+					"firstRowOnly": true
+				}
+			},
+			{
+				"name": "PL Source to Stage - Dim Pre Extract",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Send_ETL_Load_Start_Mail",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL Source to Stage - Dim Pre Extract1",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"RunID": {
+							"value": "@{pipeline().RunId}",
+							"type": "Expression"
+						},
+						"ModuleName": {
+							"value": "@{pipeline().parameters.ModuleName}",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "PL Source to Stage - Dim Extract  - PreExtractDep",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "PL Source to Stage - Dim Pre Extract",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL Source to Stage - Dim Extract  - PreExtractDep1",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"RunID": {
+							"value": "@{pipeline().RunId}",
+							"type": "Expression"
+						},
+						"ModuleName": {
+							"value": "@{pipeline().parameters.ModuleName}",
+							"type": "Expression"
+						},
+						"ETLRunStartTime": {
+							"value": "@{activity('LKP_Get_ETLRun_StartTimeStamp').output.firstRow.ETL_Run_Start_TimeStamp}",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "PL Source to Stage - Dim Extract",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "PL Source to Stage - Dim Extract  - PreExtractDep",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL Source to Stage - Dim Extract1",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"RunID": {
+							"value": "@{pipeline().RunId}",
+							"type": "Expression"
+						},
+						"ModuleName": {
+							"value": "@{pipeline().parameters.ModuleName}",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "PL Stage Duplicate Check - Dim Load",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "PL Source to Stage - Dim Extract",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL Stage Duplicate Check - Dim Load1",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"TaskPhase": "Dim_Extract",
+						"StgTableName": "NULL",
+						"RunID": {
+							"value": "@{pipeline().RunId}",
+							"type": "Expression"
+						},
+						"ETLRunStartTime": {
+							"value": "@{activity('LKP_Get_ETLRun_StartTimeStamp').output.firstRow.ETL_Run_Start_TimeStamp}",
+							"type": "Expression"
+						},
+						"ModuleName": {
+							"value": "@{pipeline().parameters.ModuleName}",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "PL Source to Stage - Fact Extract",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "PL Stage Duplicate Check - Dim Load",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL Source to Stage - Fact Extract1",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"RunID": {
+							"value": "@{pipeline().RunId}",
+							"type": "Expression"
+						},
+						"ModuleName": {
+							"value": "@{pipeline().parameters.ModuleName}",
+							"type": "Expression"
+						},
+						"TaskPhase": "Fact_Extract"
+					}
+				}
+			},
+			{
+				"name": "PL Stage to Target - Fact Load",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "PL Source to Stage - Fact Extract - Inventory Trans",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL Stage to Target - Fact Load1",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"ETLRunStartTime": {
+							"value": "@{activity('LKP_Get_ETLRun_StartTimeStamp').output.firstRow.ETL_Run_Start_TimeStamp}",
+							"type": "Expression"
+						},
+						"RunID": {
+							"value": "@{pipeline().RunId}",
+							"type": "Expression"
+						},
+						"ModuleName": {
+							"value": "@{pipeline().parameters.ModuleName}",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "PL Aggregations Load",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "PL Stage to Target - Fact Load",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL Aggregations Load1",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"ETLRunStartTime": {
+							"value": "@{activity('LKP_Get_ETLRun_StartTimeStamp').output.firstRow.ETL_Run_Start_TimeStamp}",
+							"type": "Expression"
+						},
+						"RunID": {
+							"value": "@{pipeline().RunId}",
+							"type": "Expression"
+						},
+						"ModuleName": {
+							"value": "@{pipeline().parameters.ModuleName}",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "Send_ETL_Load_Start_Mail",
+				"description": "Using \"Send_Email_ETL_Start\" Logic Apps to send email notification.",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "LKP_Get_ETLRun_StartTimeStamp",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"url": {
+						"value": "https://prod-30.centralus.logic.azure.com:443/workflows/013d25434a354d6aa2bbf8fb5b8fdd56/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=h1qw-IWrDk6MzM2eMj5lQ0sp_Rh8I0MFu10n6GoLH-E",
+						"type": "Expression"
+					},
+					"method": "POST",
+					"headers": {
+						"Content-Type": "application/json"
+					},
+					"body": {
+						"value": "{\n\"Pipeline\":\"@{pipeline().Pipeline}\",\n\"RunId\":\"@{pipeline().RunId}\",\n\"ETLRunStartTime\":\"@{activity('LKP_Get_ETLRun_StartTimeStamp').output.firstRow.ETL_Run_Start_TimeStamp}\",\n\"ModuleName\":\"@{pipeline().parameters.ModuleName}\",\n\"DatabaseName\":\"@{pipeline().parameters.DatabaseName}\",\n\"SchemaName\":\"@{pipeline().parameters.SchemaName}\"\n}",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "PL Source to Stage - Fact Extract - Inventory Trans",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "PL Source to Stage - Fact Extract",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL Source to Stage - Fact Extract_InventoryTrans",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"RunID": {
+							"value": "@{pipeline().RunId}",
+							"type": "Expression"
+						},
+						"ModuleName": {
+							"value": "@{pipeline().parameters.ModuleName}",
+							"type": "Expression"
+						},
+						"TaskPhase": "Fact_Extract",
+						"StagTableName": "CT_INVENTORY_TRANS_F_STG"
+					}
+				}
+			},
+			{
+				"name": "PL Audit Logs",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "PL Aggregations Load",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL ETL Audit Logs",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"RunID": {
+							"value": "@{pipeline().RunId}",
+							"type": "Expression"
+						},
+						"ModuleName": {
+							"value": "@{pipeline().parameters.ModuleName}",
+							"type": "Expression"
+						},
+						"ETLRunStartTime": {
+							"value": "@{activity('LKP_Get_ETLRun_StartTimeStamp').output.firstRow.ETL_Run_Start_TimeStamp}",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "Var_Get_Error_Message",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Send_ETL_Load_Start_Mail",
+						"dependencyConditions": [
+							"Failed",
+							"Skipped"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "errorMessage",
+					"value": {
+						"value": "@concat(\nactivity('LKP_Get_ETLRun_StartTimeStamp')?.Error?.message,'|',\nactivity('Send_ETL_Load_Start_Mail')?.Error?.message\n)",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Send_Failure_Message",
+				"description": "Using \"Send_Email_ETL_Failure\" Logic Apps to send email notification.",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "Var_Get_Error_Message",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"url": {
+						"value": "https://prod-10.centralus.logic.azure.com:443/workflows/c32ebdab46c745f28c2aac07a949205d/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=dLL7x35HeeUzyBgodayLDFpHPcI4qO08FKd5nabW5UA",
+						"type": "Expression"
+					},
+					"method": "POST",
+					"headers": {
+						"Content-Type": "application/json"
+					},
+					"body": {
+						"value": "{\n\"Pipeline\":\"@{pipeline().Pipeline}\",\n\"RunId\":\"@{pipeline().RunId}\",\n\"ErrorMessage\":\"@{variables('errorMessage')}\"\n}",
+						"type": "Expression"
+					}
+				}
+			}
+		],
+		"parameters": {
+			"DatabaseName": {
+				"type": "string",
+				"defaultValue": "sqldb-prd-analytics"
+			},
+			"SchemaName": {
+				"type": "string",
+				"defaultValue": "dbo"
+			},
+			"ModuleName": {
+				"type": "string",
+				"defaultValue": "Common Dimension"
+			}
+		},
+		"variables": {
+			"errorMessage": {
+				"type": "String"
+			},
+			"vFailureSummary": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "Anchor Packaging Prod"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-05-19T11:04:19Z"
+	}
+}

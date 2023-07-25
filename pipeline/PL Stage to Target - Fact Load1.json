@@ -1,0 +1,471 @@
+{
+	"name": "PL Stage to Target - Fact Load1",
+	"properties": {
+		"activities": [
+			{
+				"name": "LKP_TaskControl_StageToTarget_Records",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderStoredProcedureName": "[dbo].[PROC_CT_ETL_TASK_DEPENDENCY_STATUS_CHECK]",
+						"storedProcedureParameters": {
+							"ETLRunStartTime": {
+								"type": "DateTime",
+								"value": {
+									"value": "@{pipeline().parameters.ETLRunStartTime}",
+									"type": "Expression"
+								}
+							},
+							"ModuleName": {
+								"type": "String",
+								"value": {
+									"value": "@{pipeline().parameters.ModuleName}",
+									"type": "Expression"
+								}
+							},
+							"TaskPhase": {
+								"type": "String",
+								"value": "Fact_Load"
+							}
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "DS_CT_ETL_TASK_CONTROL_G",
+						"type": "DatasetReference"
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "ForEach_Looping_StageToTarget_Records",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "LKP_TaskControl_StageToTarget_Records",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('LKP_TaskControl_StageToTarget_Records').output.value",
+						"type": "Expression"
+					},
+					"isSequential": true,
+					"activities": [
+						{
+							"name": "LKP_Get_Task_StartTimeStamp",
+							"type": "Lookup",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "AzureSqlSource",
+									"sqlReaderQuery": "SELECT CAST(SYSDATETIMEOFFSET() AT TIME ZONE 'Central Standard Time' AS DATETIME)  AS Task_Start_TimeStamp",
+									"queryTimeout": "02:00:00",
+									"partitionOption": "None"
+								},
+								"dataset": {
+									"referenceName": "DS_CT_ETL_TASK_CONTROL_G",
+									"type": "DatasetReference"
+								}
+							}
+						},
+						{
+							"name": "LKP_StagingProcedures_Run",
+							"type": "Lookup",
+							"dependsOn": [
+								{
+									"activity": "LKP_Get_Task_StartTimeStamp",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "AzureSqlSource",
+									"sqlReaderStoredProcedureName": {
+										"value": "@{item().Procedure_Name}",
+										"type": "Expression"
+									},
+									"queryTimeout": "08:20:00",
+									"partitionOption": "None"
+								},
+								"dataset": {
+									"referenceName": "DS_CT_ETL_TASK_CONTROL_G",
+									"type": "DatasetReference"
+								},
+								"firstRowOnly": true
+							}
+						},
+						{
+							"name": "SP_TaskControl_Update",
+							"type": "SqlServerStoredProcedure",
+							"dependsOn": [
+								{
+									"activity": "LKP_StagingProcedures_Run",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"storedProcedureName": "[dbo].[PROC_CT_ETL_TASK_CONTROL_G_UPDATE]",
+								"storedProcedureParameters": {
+									"TargetTableName": {
+										"value": {
+											"value": "@{item().Target}",
+											"type": "Expression"
+										},
+										"type": "String"
+									},
+									"TaskStartTimeStamp": {
+										"value": {
+											"value": "@{activity('LKP_Get_Task_StartTimeStamp').output.firstRow.Task_Start_TimeStamp}",
+											"type": "Expression"
+										},
+										"type": "String"
+									}
+								}
+							},
+							"linkedServiceName": {
+								"referenceName": "AzureSqlDatabase1",
+								"type": "LinkedServiceReference"
+							}
+						},
+						{
+							"name": "SP_TaskRunLog_Success_Insert",
+							"type": "SqlServerStoredProcedure",
+							"dependsOn": [
+								{
+									"activity": "SP_TaskControl_Update",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"storedProcedureName": "[dbo].[PROC_CT_ETL_TASK_RUN_LOG_G_SUCCESS_UPDATE]",
+								"storedProcedureParameters": {
+									"ETLRunNumber": {
+										"value": "0",
+										"type": "Int32"
+									},
+									"NoOfRowsDelete": {
+										"value": {
+											"value": "@activity('LKP_StagingProcedures_Run').output.firstRow.DeleteCount",
+											"type": "Expression"
+										},
+										"type": "Int32"
+									},
+									"NoOfRowsInserted": {
+										"value": {
+											"value": "@activity('LKP_StagingProcedures_Run').output.firstRow.InsertCount",
+											"type": "Expression"
+										},
+										"type": "Int32"
+									},
+									"NoOfRowsUpdated": {
+										"value": {
+											"value": "@activity('LKP_StagingProcedures_Run').output.firstRow.UpdateCount",
+											"type": "Expression"
+										},
+										"type": "Int32"
+									},
+									"PipilineName": {
+										"value": {
+											"value": "@{pipeline().Pipeline}",
+											"type": "Expression"
+										},
+										"type": "String"
+									},
+									"RunID": {
+										"value": {
+											"value": "@{pipeline().parameters.RunID}",
+											"type": "Expression"
+										},
+										"type": "String"
+									},
+									"Status": {
+										"value": "Succeeded",
+										"type": "String"
+									},
+									"TargetTableName": {
+										"value": {
+											"value": "@{item().Target}",
+											"type": "Expression"
+										},
+										"type": "String"
+									},
+									"TaskKey": {
+										"value": {
+											"value": "@item().Task_Key",
+											"type": "Expression"
+										},
+										"type": "Int32"
+									},
+									"TaskName": {
+										"value": {
+											"value": "@{item().Task_Name}",
+											"type": "Expression"
+										},
+										"type": "String"
+									},
+									"TaskStartTimeStamp": {
+										"value": {
+											"value": "@{activity('LKP_Get_Task_StartTimeStamp').output.firstRow.Task_Start_TimeStamp}",
+											"type": "Expression"
+										},
+										"type": "String"
+									},
+									"ModuleName": {
+										"value": {
+											"value": "@{item().Module_Name}",
+											"type": "Expression"
+										},
+										"type": "String"
+									}
+								}
+							},
+							"linkedServiceName": {
+								"referenceName": "AzureSqlDatabase1",
+								"type": "LinkedServiceReference"
+							}
+						},
+						{
+							"name": "SP_TaskRunLog_Failures_Insert",
+							"type": "SqlServerStoredProcedure",
+							"dependsOn": [
+								{
+									"activity": "Capture_ErrorMessage",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"storedProcedureName": "[dbo].[PROC_CT_ETL_TASK_RUN_LOG_G_FAILURE_UPDATE]",
+								"storedProcedureParameters": {
+									"ErrorMessage": {
+										"value": {
+											"value": "@variables('errorMessage')",
+											"type": "Expression"
+										},
+										"type": "String"
+									},
+									"ETLRunNumber": {
+										"value": "0",
+										"type": "Int32"
+									},
+									"NoOfRowsDelete": {
+										"value": "0",
+										"type": "Int32"
+									},
+									"NoOfRowsInserted": {
+										"value": "0",
+										"type": "Int32"
+									},
+									"NoOfRowsUpdated": {
+										"value": "0",
+										"type": "Int32"
+									},
+									"PipilineName": {
+										"value": {
+											"value": "@{pipeline().Pipeline}",
+											"type": "Expression"
+										},
+										"type": "String"
+									},
+									"RunID": {
+										"value": {
+											"value": "@{pipeline().parameters.RunID}",
+											"type": "Expression"
+										},
+										"type": "String"
+									},
+									"Status": {
+										"value": "Failed",
+										"type": "String"
+									},
+									"TargetTableName": {
+										"value": {
+											"value": "@{item().Target}",
+											"type": "Expression"
+										},
+										"type": "String"
+									},
+									"TaskKey": {
+										"value": {
+											"value": "@item().Task_Key",
+											"type": "Expression"
+										},
+										"type": "Int32"
+									},
+									"TaskName": {
+										"value": {
+											"value": "@{item().Task_Name}",
+											"type": "Expression"
+										},
+										"type": "String"
+									},
+									"TaskStartTimeStamp": {
+										"value": {
+											"value": "@{activity('LKP_Get_Task_StartTimeStamp').output.firstRow.Task_Start_TimeStamp}",
+											"type": "Expression"
+										},
+										"type": "String"
+									},
+									"ModuleName": {
+										"value": {
+											"value": "@{item().Module_Name}",
+											"type": "Expression"
+										},
+										"type": "String"
+									}
+								}
+							},
+							"linkedServiceName": {
+								"referenceName": "AzureSqlDatabase1",
+								"type": "LinkedServiceReference"
+							}
+						},
+						{
+							"name": "Capture_ErrorMessage",
+							"type": "SetVariable",
+							"dependsOn": [
+								{
+									"activity": "LKP_StagingProcedures_Run",
+									"dependencyConditions": [
+										"Failed",
+										"Skipped"
+									]
+								}
+							],
+							"policy": {
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "errorMessage",
+								"value": {
+									"value": "@concat(\nactivity('LKP_Get_Task_StartTimeStamp')?.Error?.message,'|',\nactivity('LKP_StagingProcedures_Run')?.Error?.message\n)",
+									"type": "Expression"
+								}
+							}
+						},
+						{
+							"name": "Web_Send_Failure_Message",
+							"type": "WebActivity",
+							"dependsOn": [
+								{
+									"activity": "SP_TaskRunLog_Failures_Insert",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"url": {
+									"value": "https://prod-10.centralus.logic.azure.com:443/workflows/c32ebdab46c745f28c2aac07a949205d/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=dLL7x35HeeUzyBgodayLDFpHPcI4qO08FKd5nabW5UA",
+									"type": "Expression"
+								},
+								"method": "POST",
+								"headers": {
+									"Content-Type": "application/json"
+								},
+								"body": {
+									"value": "{\n\"Pipeline\":\"@{pipeline().Pipeline}\",\n\"RunId\":\"@{pipeline().RunId}\",\n\"ErrorMessage\":\"@{variables('errorMessage')}\"\n}",
+									"type": "Expression"
+								}
+							}
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"ETLRunStartTime": {
+				"type": "string"
+			},
+			"RunID": {
+				"type": "string"
+			},
+			"ModuleName": {
+				"type": "string"
+			}
+		},
+		"variables": {
+			"errorMessage": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "Anchor Packaging Prod"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-05-19T11:03:35Z"
+	}
+}

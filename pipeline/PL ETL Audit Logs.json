@@ -1,0 +1,334 @@
+{
+	"name": "PL ETL Audit Logs",
+	"properties": {
+		"activities": [
+			{
+				"name": "SP_ETL_Run_Number_Update",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[dbo].[PROC_ETL_RUNNUMBER_UPDATE]",
+					"storedProcedureParameters": {
+						"ETLRunStartTime": {
+							"value": {
+								"value": "@{pipeline().parameters.ETLRunStartTime}",
+								"type": "Expression"
+							},
+							"type": "String"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase1",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "LKP_Get_ETL_Load_Summary",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "Check_the_Failures_and_Send_Notification",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderStoredProcedureName": "[dbo].[PROC_CT_ETL_TASK_LOAD_SUMMARY]",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "DS_CT_ETL_TASK_CONTROL_G",
+						"type": "DatasetReference"
+					}
+				}
+			},
+			{
+				"name": "Send_ETL_Load_Summary",
+				"description": "Using \"Send_Email_ETL_Load_Summary\" Logic Apps to send email notification.\n\nold:\nhttps://prod-34.eastus.logic.azure.com:443/workflows/49f3a5d6190845a49c11a83a1239a227/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=2NsR7tyaLBoInSp5nLbqZh1p2YYdV-uRi1FzPhQWMpo\n\nnew:\nhttps://prod-92.eastus.logic.azure.com:443/workflows/a6cae634b90c45a2a6d44300b9b3c008/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=SGm2zULJ0c3iYwYxC_TDOC5iv96mz1w9zlyVnyJ6kgc",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "LKP_Get_ETL_Load_Summary",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"url": {
+						"value": "https://prod-18.centralus.logic.azure.com:443/workflows/5b6c59db1e294c87910819a34a2da206/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=MySDwcY3R4KNJA4qxB8ChrFo4OM8xPu6S_0F88pIXj8",
+						"type": "Expression"
+					},
+					"method": "POST",
+					"headers": {
+						"Content-Type": "application/json"
+					},
+					"body": {
+						"value": "{\n\"ETLLoadSummary\":\"@{activity('LKP_Get_ETL_Load_Summary').output.firstRow.ETLLoadSummary}\",\n\"RunId\":\"@{pipeline().RunId}\",\n\"Pipeline\":\"@{pipeline().Pipeline}\"\n}\n",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "LKP_Get_ETL_Failures_Summary",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "SP_ETL_Run_Number_Update",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderStoredProcedureName": "[dbo].[PROC_CT_ETL_TASK_FAILURES_SUMMARY]",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "DS_CT_ETL_TASK_CONTROL_G",
+						"type": "DatasetReference"
+					}
+				}
+			},
+			{
+				"name": "Check_the_Failures_and_Send_Notification",
+				"type": "IfCondition",
+				"dependsOn": [
+					{
+						"activity": "LKP_Get_ETL_Failures_Summary",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@equals(activity('LKP_Get_ETL_Failures_Summary').output.firstRow.ETLFailuresSummary,'No Failures')",
+						"type": "Expression"
+					},
+					"ifFalseActivities": [
+						{
+							"name": "Var_Failures_Summary",
+							"type": "SetVariable",
+							"dependsOn": [],
+							"policy": {
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "vFailureSummary",
+								"value": {
+									"value": "@{activity('LKP_Get_ETL_Failures_Summary').output.firstRow.ETLFailuresSummary}",
+									"type": "Expression"
+								}
+							}
+						},
+						{
+							"name": "Send_ETL_Failures_Summary",
+							"type": "WebActivity",
+							"dependsOn": [
+								{
+									"activity": "Var_Failures_Summary",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"url": {
+									"value": "https://prod-23.centralus.logic.azure.com:443/workflows/9e910513985443b6be95c4dd0732cd12/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=YKz8lUD7p96UDuaFknRGrkWbUo-nzEnGRGeHi49e6_4",
+									"type": "Expression"
+								},
+								"method": "POST",
+								"headers": {
+									"Content-Type": "application/json"
+								},
+								"body": {
+									"value": "{\n\"ETLFailuresSummary\":\"@{activity('LKP_Get_ETL_Failures_Summary').output.firstRow.ETLFailuresSummary}\"\n}\n",
+									"type": "Expression"
+								}
+							}
+						}
+					],
+					"ifTrueActivities": [
+						{
+							"name": "Var_No_Failures",
+							"type": "SetVariable",
+							"dependsOn": [],
+							"policy": {
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "vFailureSummary",
+								"value": "No Failures"
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "SP_ETL_LastSuccessfulUpdateDate",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "Send_ETL_Load_Summary",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[dbo].[PROC_CT_ETL_TASK_CONTROL_G_LAST_SUCC_START_TIMESTAMP_UPDATE]"
+				},
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase1",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "Var_Get_Error_Message",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "SP_ETL_LastSuccessfulUpdateDate",
+						"dependencyConditions": [
+							"Failed",
+							"Skipped"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "errorMessage",
+					"value": {
+						"value": "@concat(\nactivity('SP_ETL_Run_Number_Update')?.Error?.message,'|',\nactivity('LKP_Get_ETL_Failures_Summary')?.Error?.message,'|',\nactivity('Check_the_Failures_and_Send_Notification')?.Error?.message,'|',\nactivity('LKP_Get_ETL_Load_Summary')?.Error?.message,'|',\nactivity('Send_ETL_Load_Summary')?.Error?.message,'|',\nactivity('SP_ETL_LastSuccessfulUpdateDate')?.Error?.message\n)",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Send_Failure_Message",
+				"description": "Using \"Send_Email_ETL_Failure\" Logic Apps to send email notification.",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "Var_Get_Error_Message",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"url": {
+						"value": "https://prod-10.centralus.logic.azure.com:443/workflows/c32ebdab46c745f28c2aac07a949205d/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=dLL7x35HeeUzyBgodayLDFpHPcI4qO08FKd5nabW5UA",
+						"type": "Expression"
+					},
+					"method": "POST",
+					"headers": {
+						"Content-Type": "application/json"
+					},
+					"body": {
+						"value": "{\n\"Pipeline\":\"@{pipeline().Pipeline}\",\n\"RunId\":\"@{pipeline().RunId}\",\n\"ErrorMessage\":\"@{variables('errorMessage')}\"\n}",
+						"type": "Expression"
+					}
+				}
+			}
+		],
+		"parameters": {
+			"RunID": {
+				"type": "string"
+			},
+			"ModuleName": {
+				"type": "string"
+			},
+			"ETLRunStartTime": {
+				"type": "string"
+			}
+		},
+		"variables": {
+			"vFailureSummary": {
+				"type": "String"
+			},
+			"errorMessage": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "Anchor Packaging Prod"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-05-19T11:03:44Z"
+	}
+}

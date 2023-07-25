@@ -1,0 +1,12 @@
+{
+	"name": "DS_OracleEBS_Tables_PRD_Anchorpac",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "Oracle1",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "OracleTable",
+		"schema": []
+	}
+}
